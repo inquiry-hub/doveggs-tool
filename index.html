@@ -1012,6 +1012,7 @@ function buildDetailSheet(rows, getCarat, getColor, getShape, getSupQty, getStoQ
     '供应商证书链接 Supplier Certilink','供应商$/ct. Supplier Price/ct',
     '商店SKU Store SKU','商店报告号 Store Report No.',
     '商店证书链接 Store Certificate File','商店$/ct. Store Price/ct',
+    '证书一致 Cert Match','价格一致 Price Match',
     '供应商数量 Supplier Qty','商店数量 Store Qty','数量差 Difference','状态 Status'
   ];
 
@@ -1040,6 +1041,27 @@ function buildDetailSheet(rows, getCarat, getColor, getShape, getSupQty, getStoQ
 
   for(const {r, supQty, stoQty, diff, status} of processed) {
     const sup = r.sup, sto = r.sto;
+
+    // Cert match flag (CVD products only)
+    const grown = sup ? String(sup.Grown||'').toUpperCase().trim() : '';
+    const isCVD = grown === 'CVD';
+    const cNumSup = sup ? extractCertNum(sup.Certilink) : '';
+    const cNumSto = sto ? extractCertNum(sto[CERT_COL]) : '';
+    const isCertMismatch = r.type==='matched' && isCVD && cNumSup && cNumSto && cNumSup !== cNumSto;
+    let certFlag = '';
+    if(r.type === 'matched') {
+      certFlag = !isCVD ? '非CVD' : (isCertMismatch ? '⚠️ 不一致 Mismatch' : '✅ 一致 Match');
+    }
+
+    // Price match flag
+    const pSup = sup ? parseFloat(sup['$/ct.']) : NaN;
+    const pSto = sto ? parseFloat(sto[PPC_COL]) : NaN;
+    const isPriceMismatch = r.type==='matched' && !isNaN(pSup) && !isNaN(pSto) && Math.abs(pSup - pSto) > 0.5;
+    let priceFlag = '';
+    if(r.type === 'matched' && !isNaN(pSup) && !isNaN(pSto)) {
+      priceFlag = isPriceMismatch ? `⚠️ 差值$${Math.abs(pSup-pSto).toFixed(2)}` : '✅ 一致';
+    }
+
     aoa.push([
       sup ? String(sup['Ref.No.']||'') : '',
       sup ? normRef(sup['Ref.No.']||'') : '',
@@ -1055,12 +1077,13 @@ function buildDetailSheet(rows, getCarat, getColor, getShape, getSupQty, getStoQ
       sto ? String(sto[REPORT_COL]||'') : '',
       sto ? String(sto[CERT_COL]||'') : '',
       sto ? (fmtPrice(sto[PPC_COL]) ?? '') : '',
+      certFlag, priceFlag,
       supQty, stoQty, diff, status
     ]);
   }
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [22,22,8,8,18,20,14,20,40,14,18,18,40,14,12,12,12,30].map(w=>({wch:w}));
+  ws['!cols'] = [22,22,8,8,18,20,14,20,40,14,18,18,40,14,14,14,12,12,12,30].map(w=>({wch:w}));
   return ws;
 }
 
