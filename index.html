@@ -636,16 +636,33 @@ async function runReconciliation() {
 
     // Step 2 — Filter supplier
     markStep(2);
-    let supSheetName = supWb.SheetNames.includes('已筛选') ? '已筛选' : supWb.SheetNames[0];
+    // Sheet selection:
+    // - "已筛选" mode → find 已筛选 sheet (index 1), fallback to index 0
+    // - "raw" mode    → always use Sheet1 (index 0)
+    let supSheetName;
+    if(supType === 'raw') {
+      supSheetName = supWb.SheetNames[0]; // Sheet1: full unfiltered data
+    } else {
+      supSheetName = supWb.SheetNames.find(n => n === '已筛选' || n.trim() === '已筛选');
+      if (!supSheetName) {
+        supSheetName = supWb.SheetNames.length > 1 ? supWb.SheetNames[1] : supWb.SheetNames[0];
+      }
+    }
     let supRows = sheetToRows(supWb, supSheetName);
 
     if(supType === 'raw') {
+      // Location: normalize to uppercase for comparison
       supRows = supRows.filter(r => {
         const loc = String(r.Location||'').toUpperCase().trim();
-        return TARGET_LOCS.includes(loc);
+        return ['SURAT','INDIA','HONG KONG'].includes(loc);
       });
+      // Exclude G/H/I/FG colors
       supRows = supRows.filter(r => !EXCL_COLORS.includes(String(r.Color||'').trim()));
-      supRows = supRows.filter(r => String(r.Status||'').trim() === 'Available');
+      // Status filter: only apply if Status column exists and has values
+      const hasStatus = supRows.length > 0 && supRows[0].Status !== undefined && supRows[0].Status !== '';
+      if(hasStatus) {
+        supRows = supRows.filter(r => String(r.Status||'').trim() === 'Available');
+      }
     }
 
     // normalize shape and filter
