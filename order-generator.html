@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冠钻订单整理工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #9A7A2E;
+    --bg: #0D0D0D;
+    --bg2: #161616;
+    --bg3: #1E1E1E;
+    --border: #2A2A2A;
+    --text: #F0EDE8;
+    --text-muted: #888880;
+    --red: #E05555;
+    --green: #5EA87A;
+    --blue: #5B9BD5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .logo { font-size: 18px; font-weight: 700; letter-spacing: 0.04em; color: var(--gold); }
+  header .logo span { color: var(--text-muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  header .badge {
+    margin-left: auto;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  header .badge b { color: var(--gold-light); }
+  main { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg2);
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-zone .icon { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
+  .upload-zone h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .upload-zone p { color: var(--text-muted); font-size: 13px; }
+  .upload-zone.has-file { border-style: solid; border-color: var(--gold-dark); }
+  .file-name {
+    display: inline-block; margin-top: 10px;
+    background: rgba(201,168,76,0.12); color: var(--gold-light);
+    padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  }
+  .actions { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .btn {
+    padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 600; font-family: inherit;
+    transition: all 0.15s; display: flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: var(--gold); color: #0D0D0D; }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-primary:disabled { background: #3A3A2A; color: var(--text-muted); cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-download { background: var(--green); color: #0D0D0D; margin-left: auto; }
+  .btn-download:hover { filter: brightness(1.1); }
+  .btn-download:disabled { background: #2A3A2A; color: var(--text-muted); cursor: not-allowed; }
+  .status-msg { font-size: 13px; color: var(--text-muted); padding: 6px 0; }
+  .status-msg.ok { color: var(--green); }
+  .status-msg.err { color: var(--red); }
+  .status-msg.loading::after {
+    content: ''; display: inline-block; width: 10px; height: 10px;
+    border: 2px solid var(--gold); border-top-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-left: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-card .value { font-size: 22px; font-weight: 700; color: var(--gold-light); }
+  .stat-card .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  #warnings-box {
+    background: rgba(224,85,85,0.06); border: 1px solid rgba(224,85,85,0.25);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: none;
+  }
+  #warnings-box h4 { color: var(--red); font-size: 13px; margin-bottom: 10px; }
+  #warnings-box ul { list-style: none; }
+  #warnings-box li {
+    font-size: 12px; color: #E08888; padding: 3px 0;
+    border-bottom: 1px solid rgba(224,85,85,0.1); display: flex; gap: 8px;
+  }
+  #warnings-box li:last-child { border-bottom: none; }
+  #warnings-box li .tag {
+    background: rgba(224,85,85,0.15); color: var(--red); border-radius: 4px;
+    padding: 0 6px; font-size: 11px; white-space: nowrap; align-self: flex-start; margin-top: 1px;
+  }
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-header { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .table-header h3 { font-size: 14px; font-weight: 600; }
+  .count-badge {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--gold-light);
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+  }
+  .search-box {
+    margin-left: auto; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 12px; color: var(--text); font-size: 13px;
+    font-family: inherit; width: 200px; outline: none; transition: border-color 0.15s;
+  }
+  .search-box:focus { border-color: var(--gold-dark); }
+  .search-box::placeholder { color: var(--text-muted); }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg3); color: var(--text-muted); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px;
+    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap;
+    position: sticky; top: 56px;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody tr.warn-row { background: rgba(224,85,85,0.04); }
+  tbody td { padding: 10px 14px; vertical-align: top; font-size: 13px; line-height: 1.5; }
+  td.seq { color: var(--text-muted); font-size: 12px; width: 36px; }
+  td.order-no { font-weight: 600; color: var(--gold-light); white-space: nowrap; }
+  td.price { font-weight: 600; color: var(--green); white-space: nowrap; }
+  td.sku { font-family: monospace; font-size: 12px; color: var(--blue); }
+  td.stone { max-width: 240px; }
+  td.metal { white-space: nowrap; }
+  td.stamp { font-size: 11px; color: var(--text-muted); max-width: 180px; }
+  td.note-req { font-size: 12px; color: #FF9966; max-width: 180px; }
+  td.warn-cell .warn-icon { color: var(--red); font-size: 13px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state .big { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">冠钻订单整理 <span>v1.0</span></div>
+  <div class="badge">上传 Shopify Export → 一键生成工厂定制订单 &nbsp;|&nbsp; <b>下载 xlsx</b></div>
+</header>
+
+<main>
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    <div class="icon">📂</div>
+    <h3>拖拽或点击上传 Shopify Export 文件</h3>
+    <p>支持 .xlsx 格式 · Export_YYYY-MM-DD_HHMMSS.xlsx</p>
+    <div id="fileNameDisplay" style="display:none"><span class="file-name" id="fileName"></span></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="processBtn" disabled>⚙️ 开始整理</button>
+    <button class="btn btn-outline" id="clearBtn" disabled>🗑 清除</button>
+    <span class="status-msg" id="statusMsg">请先上传文件</span>
+    <button class="btn btn-download" id="downloadBtn" disabled>⬇️ 下载 xlsx</button>
+  </div>
+
+  <div class="stats" id="statsRow" style="display:none">
+    <div class="stat-card">
+      <div class="label">总订单数</div><div class="value" id="s-total">—</div><div class="sub">有效付款行</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">需人工处理</div><div class="value" id="s-warn" style="color:var(--red)">—</div><div class="sub">款号/半托待查</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">CVD 散石</div><div class="value" id="s-cvd">—</div><div class="sub">需配半托</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">总金额</div><div class="value" id="s-amount">—</div><div class="sub">美元</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">订单日期</div><div class="value" id="s-date" style="font-size:16px">—</div><div class="sub">从文件名提取</div>
+    </div>
+  </div>
+
+  <div id="warnings-box">
+    <h4>⚠️ 需人工处理的条目</h4>
+    <ul id="warnings-list"></ul>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header">
+      <h3>订单明细</h3>
+      <span class="count-badge" id="tableCount">0 条</span>
+      <input type="text" class="search-box" id="searchBox" placeholder="搜索订单号/款号/石头…" oninput="filterTable()">
+    </div>
+    <div id="tableContainer">
+      <div class="empty-state">
+        <div class="big">💎</div>
+        <p>上传文件后，订单将显示在这里</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const SIZE_TABLE = {
+  round:            {'1ct':'6.5mm','1.5ct':'7.5mm','2ct':'8mm','2.5ct':'8.5mm','3ct':'9mm','4ct':'10mm','5ct':'11mm'},
+  pear:             {'1ct':'5*7mm','1.5ct':'6*8mm','2ct':'6*9mm','2.5ct':'6.5*9.5mm','3ct':'7*10mm','4ct':'7*11mm','5ct':'8*12mm'},
+  marquise:         {'1ct':'5*10mm','1.5ct':'5.5*11mm','2ct':'6*12mm','3ct':'7*14mm','4ct':'7.5*15mm','5ct':'8*15.5mm'},
+  emerald:          {'1ct':'5*7mm','1.5ct':'5.5*7.5mm','2ct':'6*8mm','3ct':'7*9mm','4ct':'8*10mm','5ct':'9*11mm'},
+  oval:             {'1ct':'5*7mm','1.5ct':'6*8mm','2ct':'7*9mm','2.5ct':'6.5*9.5mm','3ct':'7*11mm'},
+  cushion:          {'1ct':'6mm','1.5ct':'7mm','2ct':'7.5mm','3ct':'8.5mm','4ct':'9.25mm','5ct':'10mm'},
+  radiant:          {'1ct':'5*7mm','1.5ct':'5.5*7.5mm','2ct':'6*8mm','3ct':'7*9mm','4ct':'8*10mm','5ct':'9*11mm'},
+  squareradiant:    {'1ct':'5.5mm','2ct':'6.5mm','3ct':'7.5mm','4ct':'8.5mm','5ct':'9.5mm'},
+  longemerald:      {'1ct':'4*7mm','1.5ct':'4.5*7.5mm','2ct':'5*8.5mm','3ct':'6*10mm','5ct':'8*12mm'},
+  krupp:            {'1ct':'5.5*6.5mm','2ct':'6.5*7.5mm','3ct':'7.5*8.5mm','4ct':'8.5*9.5mm','5ct':'9.5*10.5mm'},
+  octagon:          {'1ct':'6mm','1.5ct':'6.5mm','2ct':'7mm','3ct':'8mm','4ct':'9mm','5ct':'10mm'},
+  sakura:           {'1ct':'6.5mm','1.5ct':'7.5mm','2ct':'8mm','3ct':'9mm','4ct':'10mm','5ct':'11mm'},
+  pixel:            {'1ct':'5*7mm','2ct':'6*8mm','3ct':'7*9mm','4ct':'8*10mm','5ct':'9*11mm'},
+  elongatedcushion: {'1ct':'5.5*6mm','1.5ct':'6*7mm','2ct':'6.5*7.5mm','3ct':'8*9mm','5ct':'9*11mm'},
+};
+
+function getShapeKey(sr, cr) {
+  const s=(sr||'').toLowerCase(), c=(cr||'').toLowerCase();
+  if (c.includes('elongated cushion')) return 'elongatedcushion';
+  if (c.includes('elongated emerald')||s.includes('elongated emerald')) return 'longemerald';
+  if (c.includes('square radiant')) return 'squareradiant';
+  if (c.includes('pixel')) return 'pixel';
+  if (c.includes('krupp')||c.includes('elizabeth taylor')) return 'krupp';
+  if (c.includes('sakura')) return 'sakura';
+  if (s.includes('octagon')) return 'octagon';
+  if (s.includes('radiant')||c.includes('radiant')) return 'radiant';
+  if (s.includes('marquise')) return 'marquise';
+  if (s.includes('cushion')) return 'cushion';
+  if (s.includes('pear')) return 'pear';
+  if (s.includes('oval')) return 'oval';
+  if (s.includes('round')) return 'round';
+  if (s.includes('emerald')) return 'emerald';
+  return 'round';
+}
+
+function getSize(ct, sr, cr) {
+  const sk = getShapeKey(sr, cr);
+  const tbl = SIZE_TABLE[sk] || SIZE_TABLE.round;
+  const m = (ct||'').match(/([\d.]+)\s*ct/i);
+  if (!m) return '';
+  const v = parseFloat(m[1]);
+  const key = `${v}ct`;
+  return tbl[key] ? `（${tbl[key]}）` : '';
+}
+
+function sfx(cr) {
+  const c=(cr||'').toLowerCase();
+  if (c.includes('astro')) return '欧切';
+  if (c.includes('nova')) return 'Nova切';
+  if (c.includes('rose')) return '玫瑰切';
+  if (c.includes('crushed ice')) return '碎冰切';
+  if (c.includes('old mine')||c.includes('old european')||c.includes('portuguese')) return '欧切';
+  if (c.includes('h&a')) return '常规切';
+  if (c.includes('crown arrow')) return '新CA切';
+  if (c.includes('step')) return '阶梯切';
+  return '';
+}
+
+function shapeCutCN(sr, cr) {
+  const c=(cr||'').toLowerCase(), s=(sr||'').toLowerCase();
+  if (c.includes('square cushion old mine')) return '正枕老矿切';
+  if (c.includes('square cushion')) return '正枕常规切';
+  if (c.includes('elongated cushion old mine')) return '长枕老矿切';
+  if (c.includes('elongated cushion astro')) return '长枕欧切';
+  if (c.includes('elongated cushion')) return '长枕'+sfx(cr);
+  if (c.includes('elongated emerald')||s.includes('elongated emerald')) return '长祖母绿切';
+  if (c.includes('elongated oval h&a')) return '长椭圆常规切';
+  if (c.includes('elongated oval')) return '长椭圆'+sfx(cr);
+  if (c.includes('oval crushed ice')) return '椭圆碎冰切';
+  if (c.includes('oval astro')) return '椭圆欧切';
+  if (c.includes('oval nova')) return '椭圆Nova切';
+  if (c.includes('oval rose')) return '椭圆玫瑰切';
+  if (c.includes('oval h&a')) return '椭圆常规切';
+  if (c.includes('elongated krupp')||c.includes('elizabeth taylor krupp')) return '长阿斯切';
+  if (c.includes('round crown arrow')||(c.includes('crown arrow')&&!c.includes('pear'))) return '圆形新CA切';
+  if (c.includes('crown arrow')&&c.includes('pear')) return '梨形新CA切';
+  if (c.includes('round old european')||c.includes('round portuguese')) return '圆形欧切';
+  if (c.includes('round nova')) return '圆形Nova切';
+  if (c.includes('round astro')) return '圆形欧切';
+  if (c.includes('round h&a')) return '圆形常规切';
+  if (c.includes('regular radiant')&&c.includes('astro')) return '雷迪恩欧切';
+  if (c.includes('regular radiant')) return '雷迪恩常规切';
+  if (c.includes('square radiant')) return '正雷迪恩';
+  if (c.includes('pear astro')) return '梨形欧切';
+  if (c.includes('pear h&a')) return '梨形常规切';
+  if (c.includes('marquise modified h&a')) return '马眼改良常规切';
+  if (c.includes('marquise step')) return '马眼阶梯切';
+  if (c.includes('dutch marquise')) return '马眼Doutch常规切';
+  if (c.includes('modified sakura')) return '樱花切';
+  if (c.includes('octagon')) return '圆八角常规切';
+  if (c.includes('pixel')) return '长像素切';
+  if (c.includes('princess astro')) return '公主方欧切';
+  if (c.includes('princess h&a')) return '公主方常规切';
+  if (s.includes('emerald')&&!s.includes('elongated')) return '祖母绿形';
+  const M={Round:'圆形',Oval:'椭圆',Marquise:'马眼',Cushion:'枕形',
+    Radiant:'雷迪恩',Pear:'梨形',Princess:'公主方',Emerald:'祖母绿形',Heart:'心形'};
+  return (M[sr||'']||(sr||''))+sfx(cr);
+}
+
+const COLOR_RULES=[
+  ['twilight blue','暮色蓝色','莫桑'],['peacock blue','孔雀蓝色','莫桑'],
+  ['hawaii blue','夏威夷蓝色','莫桑'],['black moissanite','黑色','莫桑'],
+  ['cyan green','青绿色','莫桑'],['def','DEF色','莫桑'],['ghi','FG色','莫桑'],
+  ['stardust grey','stardust黑灰色','莫桑'],['champagne','香槟色','莫桑'],
+  ['vivid pigeon blood ruby','鸽血红宝石','合成红宝石'],
+  ['pigeon blood ruby','鸽血红宝石','合成红宝石'],['ruby','合成红宝石','合成红宝石'],
+  ['zambia emerald','赞比亚祖母绿','天然祖母绿'],['emerald','祖母绿','天然祖母绿'],
+  ['pink sapphire','合成粉色宝石','合成粉色宝石'],
+  ['intense royal blue sapphire','皇家蓝宝石','蓝宝石'],
+  ['orange sapphire','橙色蓝宝石','蓝宝石'],['purple sapphire','紫色蓝宝石','蓝宝石'],
+  ['yellow sapphire','黄色蓝宝石','蓝宝石'],['black sapphire','黑色蓝宝石','蓝宝石'],
+  ['sapphire','蓝宝石','蓝宝石'],
+  ['fg color','FG色','莫桑'],['near colorless','FG色','莫桑'],['moissanite','FG色','莫桑'],
+];
+const ACCENT_RULES=[
+  ['lab grown diamond','cvd'],['lab diamond','cvd'],
+  ['zambia emerald','天然祖母绿'],['emerald','天然祖母绿'],
+  ['vivid pigeon blood ruby','合成红宝石'],['ruby','合成红宝石'],
+  ['intense royal blue sapphire','皇家蓝宝石'],['orange sapphire','橙色蓝宝石'],
+  ['purple sapphire','紫色蓝宝石'],['yellow sapphire','黄色蓝宝石'],
+  ['pink sapphire','合成粉色宝石'],['black sapphire','黑色蓝宝石'],['sapphire','蓝宝石'],
+  ['near colorless','莫桑'],['colorless moissanite','莫桑'],['moissanite','莫桑'],
+];
+
+function classifyStone(raw){
+  const r=(raw||'').toLowerCase();
+  for(const [k,cn,st] of COLOR_RULES) if(r.includes(k)) return {cn,st,isGem:st!=='莫桑'};
+  return {cn:raw,st:'莫桑',isGem:false};
+}
+function translateAccent(raw){
+  const r=(raw||'').toLowerCase();
+  for(const [k,cn] of ACCENT_RULES) if(r.includes(k)) return cn;
+  return '莫桑';
+}
+function buildStone(ct,cr,sr,cur,ar){
+  const {cn,st,isGem}=classifyStone(cr);
+  const sc=shapeCutCN(sr,cur), sz=getSize(ct,sr,cur);
+  let s=isGem?`${ct}${sz}${sc}${cn}`:`${ct}${sz}${cn}${sc}${st}`;
+  if(ar) s+=`，付石：${translateAccent(ar)}`;
+  return s;
+}
+function metalCN(ms,vtm){
+  const s=(ms||vtm||'').toLowerCase();
+  if(s.includes('platinum')&&!s.includes('plated')) return '铂金';
+  if(s.includes('10k')&&s.includes('rose')) return '10K玫瑰金';
+  if(s.includes('10k')&&s.includes('yellow')) return '10K黄金';
+  if(s.includes('10k')) return '10K白金';
+  if(s.includes('14k')&&s.includes('rose')) return '14K玫瑰金';
+  if(s.includes('14k')&&s.includes('yellow')) return '14K黄金';
+  if(s.includes('14k')) return '14K白金';
+  if(s.includes('18k')) return '18K白金';
+  if(s.includes('sterling silver')) return '银镀铂金（电厚金）';
+  return ms||'';
+}
+function makeStamp(mc,ct,hasAcc,eng){
+  if(!mc) return '';
+  const m=(ct||'').match(/([\d.]+)\s*ct/i);
+  const v=m?parseFloat(m[1]):0;
+  const sc=(v>0&&v===Math.floor(v))?`${v}.01`:(v>0?`${v}`:'？');
+  let p='S925';
+  if(mc.includes('铂金')&&!mc.includes('银')) p='Pt950';
+  else if(mc.includes('10K')) p='G10K';
+  else if(mc.includes('14K')) p='G14K';
+  else if(mc.includes('18K')) p='G18K';
+  let s=hasAcc?`${p}，D${sc}ct，d？ct`:`${p}，D${sc}ct`;
+  if(eng) s+=`，${eng}`;
+  return s;
+}
+
+function parseProps(props,vt){
+  const r={metal:'',stoneColor:'',stoneShape:'',stoneCut:'',accentColor:'',size:'',engraving:'',extraNotes:'',ct:'',metalFromVt:''};
+  if(vt&&!['nan','shopify','automatic','Free Quote Only'].includes(vt)){
+    const parts=vt.split('/');
+    r.ct=parts[0].trim();
+    if(parts[1]) r.metalFromVt=parts[1].trim();
+  }
+  if(!props||props==='nan') return r;
+  for(const line of props.split('\n')){
+    const l=line.trim();
+    if(!l||l.startsWith('_Ymq')||l.startsWith('http')) continue;
+    const lc=l.replace(/\s*\|\s*[£$][\d.]+\s*$/,'');
+    if(lc.includes('Setting Metal')){const m=lc.match(/:\s*(.+)$/);if(m)r.metal=m[1].trim();}
+    else if(lc.includes('Moissanite/Colored Gem Part')&&lc.includes(':')&&!lc.includes('Setting')){
+      const m=lc.match(/:\s*(.+)$/);if(m)r.stoneColor=(r.stoneColor+' '+m[1].trim()).trim();
+    }
+    else if((lc.includes('Center Stone Color')||lc.includes('Stone Color:'))&&!r.stoneColor){
+      const m=lc.match(/:\s*(.+)$/);if(m)r.stoneColor=m[1].trim();
+    }
+    else if(/Center [Ss]tone [Ss]hape/.test(lc)){const m=lc.match(/:\s*(.+)$/);if(m)r.stoneShape=m[1].trim();}
+    else if(/(?:Cut:|Krupp Cut:|Stone Cut:)/.test(lc)&&!lc.includes('Baguette')&&!lc.includes('Accents')){
+      const m=lc.match(/:\s*(.+)$/);if(m)r.stoneCut=m[1].trim();
+    }
+    else if(lc.includes('Emerald/Elongated Emerald')||lc.includes('Marquise Center Stone:')){
+      const m=lc.match(/:\s*(.+)$/);if(m)r.stoneCut=m[1].trim();
+    }
+    else if(['Accents Part','Accents:','Colored Gem Accents Part','Moissanite/Colored Gem Accent Part',
+             'Round Accents Part','Round Accents Color Part','Accents Stones Color'].some(x=>lc.includes(x))){
+      if(lc.includes(':')){
+        const m=lc.match(/:\s*(.+)$/);
+        if(m&&(!r.accentColor||r.accentColor.toLowerCase().includes('moissanite')||r.accentColor.toLowerCase().includes('colorless')))
+          r.accentColor=m[1].trim();
+      }
+    }
+    else if(lc.includes('Size (US Size)')){const m=lc.match(/:\s*(.+)/);if(m)r.size='美'+m[1].trim();}
+    else if(lc.includes('Engraving')){const m=lc.match(/:\s*(.+)/);if(m)r.engraving=m[1].trim();}
+    else if(lc.includes('Make small changes')){const m=lc.match(/:\s*(.+)/);if(m&&m[1].trim())r.extraNotes=m[1].trim();}
+  }
+  return r;
+}
+
+let processedOrders=[], currentFileName='', rawFileData=null;
+
+function processOrders(rawData){
+  const skip=new Set(['shopify','automatic','Free Quote Only']);
+  const orders=[];
+  const groups={};
+  for(const row of rawData){
+    const name=row['Name'];
+    if(!name) continue;
+    if(!groups[name]) groups[name]=[];
+    groups[name].push(row);
+  }
+  for(const [name,rows] of Object.entries(groups)){
+    const pr=rows.find(r=>r['Price: Total']!==null&&r['Price: Total']!==undefined&&r['Price: Total']!=='');
+    const price=pr?parseFloat(pr['Price: Total']):0;
+    if(price===0) continue;
+    const mainRows=rows.filter(r=>{
+      const lt=r['Line: Type']||'';
+      if(['Shipping Line','Discount'].includes(lt)) return false;
+      const vt=r['Line: Variant Title']||'';
+      const props=r['Line: Properties']||'';
+      const sku=r['Line: SKU']||'';
+      const title=r['Line: Title']||'';
+      if(skip.has(String(vt))) return false;
+      if(String(props).includes('_YmqChidrenId')) return false;
+      if(!sku&&!vt&&!props&&!title) return false;
+      if(title==='percentage') return false;
+      return true;
+    });
+    const seen=new Set();
+    for(const row of mainRows){
+      const sku=String(row['Line: SKU']||'');
+      const vt=String(row['Line: Variant Title']||'');
+      const props=String(row['Line: Properties']||'');
+      const title=String(row['Line: Title']||'');
+      const key=`${sku}|${vt.slice(0,40)}|${title.slice(0,40)}`;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      const isCVD=title.includes('LAB GROWN DIAMOND')||(title.includes('Certified')&&title.includes('Lab'));
+      const isSemi=/semi.?mount/i.test(title)||/necklace semi mount/i.test(title);
+      const p=parseProps(props,vt);
+      const mc=metalCN(p.metal,p.metalFromVt);
+      const ct=p.ct;
+      let stone='';
+      if(ct&&p.stoneColor) stone=buildStone(ct,p.stoneColor,p.stoneShape,p.stoneCut,p.accentColor);
+      else if(isCVD) stone=title;
+      else if(isSemi) stone=title;
+      else if(title&&!title.includes('Insured')&&!title.includes('No shipping')&&!title.includes('Standard')) stone=title;
+      const hasAcc=!!p.accentColor;
+      const stamp=makeStamp(mc,ct,hasAcc,p.engraving);
+      const warnings=[];
+      if(!sku||sku==='nan'){if(!isCVD) warnings.push('款号待查');}
+      if(isCVD&&!isSemi) warnings.push('需配半托');
+      if(isSemi&&(!sku||sku==='nan')&&!isCVD) warnings.push('半托款号待查');
+      orders.push({
+        seq:orders.length+1,
+        orderNo:name.replace('#','独立站'),
+        price, sku:(sku&&sku!=='nan')?sku:'',
+        stone, mc, stamp,
+        ringSize:p.size, noteReq:p.extraNotes,
+        warnings, isCVD, isSemi,
+      });
+    }
+  }
+  orders.forEach((o,i)=>o.seq=i+1);
+  return orders;
+}
+
+const fileInput=document.getElementById('fileInput');
+const dropZone=document.getElementById('dropZone');
+const processBtn=document.getElementById('processBtn');
+const clearBtn=document.getElementById('clearBtn');
+const downloadBtn=document.getElementById('downloadBtn');
+const statusMsg=document.getElementById('statusMsg');
+
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault();dropZone.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];if(f)handleFile(f);
+});
+fileInput.addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+
+function handleFile(file){
+  currentFileName=file.name;
+  document.getElementById('fileName').textContent=file.name;
+  document.getElementById('fileNameDisplay').style.display='block';
+  dropZone.classList.add('has-file');
+  processBtn.disabled=false; clearBtn.disabled=false; downloadBtn.disabled=true;
+  setStatus(`已加载：${file.name}`,'');
+  processedOrders=[]; renderTable([]);
+  const reader=new FileReader();
+  reader.onload=e=>{rawFileData=e.target.result;};
+  reader.readAsArrayBuffer(file);
+}
+
+processBtn.addEventListener('click',()=>{
+  if(!rawFileData) return;
+  setStatus('正在解析...','loading');
+  processBtn.disabled=true;
+  setTimeout(()=>{
+    try{
+      const wb=XLSX.read(rawFileData,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      processedOrders=processOrders(data);
+      renderTable(processedOrders);
+      updateStats(processedOrders);
+      renderWarnings(processedOrders);
+      downloadBtn.disabled=false;
+      setStatus(`✓ 整理完成，共 ${processedOrders.length} 条订单`,'ok');
+    }catch(err){
+      setStatus('解析失败：'+err.message,'err');
+      processBtn.disabled=false;
+    }
+  },50);
+});
+
+clearBtn.addEventListener('click',()=>{
+  rawFileData=null; currentFileName=''; processedOrders=[];
+  fileInput.value='';
+  document.getElementById('fileNameDisplay').style.display='none';
+  dropZone.classList.remove('has-file');
+  processBtn.disabled=true; clearBtn.disabled=true; downloadBtn.disabled=true;
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('warnings-box').style.display='none';
+  renderTable([]); setStatus('请先上传文件','');
+});
+
+downloadBtn.addEventListener('click',()=>{
+  if(!processedOrders.length) return;
+  const dateStr=extractDate(currentFileName);
+  const outWb=XLSX.utils.book_new();
+  const rows=[
+    ['日期','序号','款号','备注要求','产品图示','石头大小','戒托材质','字印','圈号','网站','Setting','CVD','备注'],
+    ...processedOrders.map(o=>[dateStr,o.seq,o.sku,o.noteReq,'',o.stone,o.mc,o.stamp,o.ringSize,o.price,'','',o.orderNo])
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[8,6,14,20,10,30,14,22,8,10,10,10,14].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(outWb,ws,'订单');
+  const fname=`${dateStr.replace(/-/g,'')}冠钻.xlsx`;
+  XLSX.writeFile(outWb,fname);
+  setStatus(`✓ 已下载 ${fname}`,'ok');
+});
+
+function extractDate(filename){
+  const m=filename.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  const t=new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+function setStatus(msg,type){
+  statusMsg.textContent=msg;
+  statusMsg.className='status-msg'+(type?' '+type:'');
+}
+function updateStats(orders){
+  document.getElementById('statsRow').style.display='grid';
+  const warnCount=orders.filter(o=>o.warnings.length>0).length;
+  const cvdCount=orders.filter(o=>o.isCVD).length;
+  const totalAmt=[...new Set(orders.map(o=>o.orderNo))].reduce((s,n)=>{
+    const o=orders.find(x=>x.orderNo===n); return s+(o?o.price:0);
+  },0);
+  document.getElementById('s-total').textContent=orders.length;
+  document.getElementById('s-warn').textContent=warnCount;
+  document.getElementById('s-cvd').textContent=cvdCount;
+  document.getElementById('s-amount').textContent='$'+totalAmt.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('s-date').textContent=extractDate(currentFileName);
+}
+function renderWarnings(orders){
+  const warned=orders.filter(o=>o.warnings.length>0);
+  const box=document.getElementById('warnings-box');
+  const list=document.getElementById('warnings-list');
+  if(!warned.length){box.style.display='none';return;}
+  box.style.display='block';
+  list.innerHTML=warned.map(o=>`
+    <li>
+      <span class="tag">${o.orderNo}</span>
+      <span>${o.warnings.join('；')} ${o.sku?'款号:'+o.sku:''} ${o.stone?'·'+o.stone.slice(0,40):''}</span>
+    </li>`).join('');
+}
+let allOrders=[];
+function renderTable(orders){
+  allOrders=orders;
+  document.getElementById('tableCount').textContent=orders.length+' 条';
+  const container=document.getElementById('tableContainer');
+  if(!orders.length){
+    container.innerHTML=`<div class="empty-state"><div class="big">💎</div><p>上传文件后，订单将显示在这里</p></div>`;
+    return;
+  }
+  container.innerHTML=`<table>
+    <thead><tr>
+      <th>#</th><th>订单号</th><th>金额</th><th>款号</th>
+      <th>石头大小</th><th>戒托材质</th><th>字印</th><th>圈号</th><th>备注要求</th><th>⚠</th>
+    </tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>`;
+  renderRows(orders);
+}
+function renderRows(orders){
+  const tbody=document.getElementById('tableBody');
+  if(!tbody) return;
+  tbody.innerHTML=orders.map(o=>`
+    <tr class="${o.warnings.length?'warn-row':''}">
+      <td class="seq">${o.seq}</td>
+      <td class="order-no">${o.orderNo}</td>
+      <td class="price">$${o.price.toFixed(2)}</td>
+      <td class="sku">${o.sku||'<span style="color:var(--red);font-size:11px">待查</span>'}</td>
+      <td class="stone">${o.stone||'—'}</td>
+      <td class="metal">${o.mc||'—'}</td>
+      <td class="stamp">${o.stamp||'—'}</td>
+      <td>${o.ringSize||'—'}</td>
+      <td class="note-req">${o.noteReq?o.noteReq.slice(0,50)+(o.noteReq.length>50?'…':''):'—'}</td>
+      <td class="warn-cell">${o.warnings.length?'<span class="warn-icon" title="'+o.warnings.join(', ')+'">⚠</span>':''}</td>
+    </tr>`).join('');
+}
+function filterTable(){
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  if(!q){renderRows(allOrders);document.getElementById('tableCount').textContent=allOrders.length+' 条';return;}
+  const filtered=allOrders.filter(o=>
+    o.orderNo.toLowerCase().includes(q)||o.sku.toLowerCase().includes(q)||
+    o.stone.toLowerCase().includes(q)||o.mc.toLowerCase().includes(q)
+  );
+  renderRows(filtered);
+  document.getElementById('tableCount').textContent=filtered.length+' / '+allOrders.length+' 条';
+}
+</script>
+</body>
+</html>
