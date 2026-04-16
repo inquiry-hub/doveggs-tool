@@ -102,7 +102,19 @@
 </style>
 </head>
 <body>
-
+<script>
+  (function(){
+    const pwd = localStorage.getItem('de_auth');
+    if(pwd !== 'doveggs2025'){
+      const input = prompt('请输入访问密码：');
+      if(input === 'doveggs2026'){
+        localStorage.setItem('de_auth', input);
+      } else {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0A0A0A;color:#777;font-family:monospace;font-size:14px">访问被拒绝</div>';
+      }
+    }
+  })();
+</script>
 <div class="top-bar"></div>
 
 <header>
