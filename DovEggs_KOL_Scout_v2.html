@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOL Scout v2 — DovEggs</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+:root{--bg:#0e0c0a;--s:#161410;--s2:#1e1b17;--bd:#2a2620;--bd2:#3a3530;--gold:#c9a96e;--gold2:#e8c98a;--tx:#f0ead8;--tx2:#9a9080;--tx3:#5a5248;--green:#6bba8a;--amber:#e8a84a;--red:#e06060;--blue:#7ab4d4;--purple:#b090e0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.4}
+header{padding:1.8rem 2.5rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:baseline;gap:1.2rem}
+header h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--gold2);letter-spacing:-.02em}
+header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.12em;text-transform:uppercase}
+.container{max-width:1200px;margin:0 auto;padding:2rem 2.5rem 4rem}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:2rem}
+.tab{padding:.7rem 1.4rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--tx2)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* PANEL */
+.panel{background:var(--s);border:1px solid var(--bd);border-radius:12px;padding:1.8rem;margin-bottom:1.5rem}
+.panel-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+.panel-title::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.8rem}
+.g13{display:grid;grid-template-columns:3fr 1fr;gap:.8rem}
+.g31{display:grid;grid-template-columns:1fr 3fr;gap:.8rem}
+.field{display:flex;flex-direction:column;gap:.35rem}
+label{font-size:.68rem;color:var(--tx3);font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+input,select,textarea{background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:'DM Mono',monospace;font-size:.8rem;padding:.55rem .85rem;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+input::placeholder{color:var(--tx3)}
+select option{background:var(--s2)}
+textarea{resize:vertical;min-height:70px;font-size:.76rem;line-height:1.6}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1.3rem;border-radius:6px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--gold);color:#0e0c0a;font-weight:500}
+.btn-primary:hover{background:var(--gold2)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--bd2);color:var(--tx2)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-green{background:#0d1f14;border:1px solid #1e4030;color:var(--green)}
+.btn-green:hover{background:#122818}
+.btn-blue{background:#0d1a24;border:1px solid #1e3a50;color:var(--blue)}
+.btn-blue:hover{background:#101f2a}
+.btn-danger{background:transparent;border:1px solid #3a2020;color:var(--red);padding:.35rem .7rem;font-size:.68rem}
+.btn-danger:hover{background:#2a1515}
+.action-row{display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;align-items:center}
+
+/* STATUS */
+.status-bar{font-family:'DM Mono',monospace;font-size:.72rem;padding:.5rem 1rem;border-radius:5px;margin-bottom:1.2rem;display:none}
+.status-bar.info{background:#0d1a24;border:1px solid #1e3a50;color:var(--blue);display:block}
+.status-bar.success{background:#0d1f14;border:1px solid #1e4030;color:var(--green);display:block}
+.status-bar.error{background:#1f0d0d;border:1px solid #401e1e;color:var(--red);display:block}
+
+/* STATS */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:2rem}
+.stat-cell{background:var(--s);padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.25rem}
+.stat-label{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3)}
+.stat-value{font-family:'DM Serif Display',serif;font-size:1.7rem;color:var(--gold2);line-height:1}
+
+/* TABLE */
+.table-wrap{background:var(--s);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.table-header{padding:.9rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.table-header-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:.5rem}
+.table-header-title::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+.table-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{background:#12100e;padding:.65rem .9rem;text-align:left;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);border-bottom:1px solid var(--bd);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--bd);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#1a1714}
+td{padding:.7rem .9rem;vertical-align:middle;color:var(--tx2)}
+td.name-cell{color:var(--tx);font-weight:500;max-width:160px}
+td.name-cell a{color:var(--gold);text-decoration:none;font-family:'DM Mono',monospace;font-size:.72rem}
+td.name-cell a:hover{color:var(--gold2)}
+.platform-badge{display:inline-block;padding:.18rem .5rem;border-radius:3px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;font-weight:500}
+.badge-youtube{background:#2a1515;color:#e06060;border:1px solid #401e1e}
+.badge-instagram{background:#1e1525;color:#c080e0;border:1px solid #3a2a50}
+.badge-tiktok{background:#0d1e1e;color:#60d0c0;border:1px solid #1a3a38}
+.badge-pinterest{background:#2a1215;color:#e05060;border:1px solid #401820}
+.badge-reddit{background:#2a1a10;color:#e08040;border:1px solid #402010}
+.num{font-family:'DM Mono',monospace;font-size:.75rem}
+.er-pill{display:inline-block;padding:.16rem .5rem;border-radius:20px;font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500}
+.er-excellent{background:#0d1f14;color:var(--green);border:1px solid #1e4030}
+.er-good{background:#1a1f0d;color:#a8d060;border:1px solid #2a3a10}
+.er-average{background:#1f1a0d;color:var(--amber);border:1px solid #3a2e10}
+.er-low{background:#1f0d0d;color:var(--red);border:1px solid #401e1e}
+.er-na{background:var(--s2);color:var(--tx3);border:1px solid var(--bd)}
+.email-cell{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--blue);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty-state{text-align:center;padding:3.5rem 2rem;color:var(--tx3)}
+.empty-state .diamond{font-size:2rem;margin-bottom:.8rem;opacity:.3}
+.empty-state p{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em}
+.spinner{display:inline-block;width:11px;height:11px;border:1.5px solid var(--bd2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* UTM */
+.utm-result{background:#12100e;border:1px solid var(--bd);border-radius:6px;padding:.8rem 1rem;font-family:'DM Mono',monospace;font-size:.74rem;color:var(--blue);word-break:break-all;line-height:1.5;margin-top:.8rem}
+.copy-row{display:flex;align-items:center;gap:.6rem;margin-top:.5rem}
+.copied-badge{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--green);opacity:0;transition:opacity .3s}
+.copied-badge.show{opacity:1}
+
+/* POST TRACKER */
+.post-card{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:1rem 1.2rem;margin-bottom:.8rem}
+.post-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem}
+.post-creator{font-weight:600;color:var(--tx)}
+.post-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:.6rem}
+.metric-box{background:var(--s);border:1px solid var(--bd);border-radius:5px;padding:.45rem .6rem;text-align:center}
+.metric-label{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin-bottom:.2rem}
+.metric-value{font-family:'DM Mono',monospace;font-size:.9rem;color:var(--tx)}
+.metric-value.highlight{color:var(--gold2)}
+
+/* NOTE BOX */
+.note-box{background:#12100e;border:1px solid var(--bd);border-left:3px solid var(--gold);border-radius:6px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.76rem;color:var(--tx2);line-height:1.7}
+.note-box strong{color:var(--gold)}
+
+@media(max-width:700px){.g2,.g3,.g4,.g13,.g31{grid-template-columns:1fr}.stats-strip{grid-template-columns:1fr 1fr}.container{padding:1rem}}
+</style>
+</head>
+<body>
+<header>
+  <h1>KOL Scout</h1>
+  <span>DovEggs · v2.0 · Influencer Research Tool</span>
+</header>
+<div class="container">
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('discover')">① 达人搜集</div>
+  <div class="tab" onclick="switchTab('posts')">② 内容数据追踪</div>
+  <div class="tab" onclick="switchTab('utm')">③ 短链 & UTM 生成</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  TAB 1: DISCOVER                          -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-discover" class="tab-panel active">
+
+<div class="note-box">
+  <strong>YouTube 自动拉取：</strong>粘贴频道链接后点击「添加并分析」，自动获取近10条视频均值数据（需填入 YouTube API Key，见底部说明）<br>
+  <strong>其他平台：</strong>手动填入粉丝数和互动数据，工具自动计算互动率和评级<br>
+  <strong>导出格式：</strong>完全对齐「达人收集池」表头（19列），能拉取的自动填充，其余留空
+</div>
+
+<div class="panel">
+  <div class="panel-title">录入达人信息</div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>编号（自动）</label><input id="inId" placeholder="自动生成" disabled></div>
+    <div class="field"><label>达人姓名</label><input id="inName" placeholder="e.g. Melody Tea"></div>
+    <div class="field"><label>平台</label>
+      <select id="inPlatform">
+        <option>YouTube</option><option>Instagram</option><option>TikTok</option>
+        <option>Pinterest</option><option>Reddit</option><option>YouTube+Instagram</option>
+        <option>TikTok+Instagram</option><option>多平台</option>
+      </select>
+    </div>
+    <div class="field"><label>国家/地区</label><input id="inCountry" placeholder="US / Taiwan"></div>
+  </div>
+  <div class="g2" style="margin-bottom:.8rem">
+    <div class="field"><label>账号链接（YouTube 可自动拉取）</label><input id="inUrl" placeholder="https://www.youtube.com/@channelname"></div>
+    <div class="field"><label>内容垂类/风格</label><input id="inCategory" placeholder="Fashion / Beauty / Lifestyle"></div>
+  </div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>粉丝量</label><input type="number" id="inFollowers" placeholder="52000"></div>
+    <div class="field"><label>平均播放量</label><input type="number" id="inViews" placeholder="8500"></div>
+    <div class="field"><label>平均点赞量</label><input type="number" id="inLikes" placeholder="650"></div>
+    <div class="field"><label>平均评论量</label><input type="number" id="inComments" placeholder="80"></div>
+  </div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>联系邮箱</label><input id="inEmail" placeholder="creator@email.com"></div>
+    <div class="field"><label>代理人姓名</label><input id="inAgent" placeholder="Agent: Sarah"></div>
+    <div class="field"><label>代理人邮箱</label><input id="inAgentEmail" placeholder="agent@agency.com"></div>
+    <div class="field"><label>建联日期</label><input type="date" id="inDate"></div>
+  </div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>是否适合合作</label>
+      <select id="inFit"><option value="">—</option><option>✅ 适合</option><option>⚠️ 待确认</option><option>❌ 不适合</option></select>
+    </div>
+    <div class="field"><label>建议合作内容</label><input id="inContent" placeholder="TikTok独立视频"></div>
+    <div class="field"><label>建议产品预算</label>
+      <select id="inBudget">
+        <option value="">—</option>
+        <option>$400-500 Sterling Silver</option><option>$600-800 10K Gold</option>
+        <option>$800-1000 10K Gold</option><option>$1000+ 特殊项目</option>
+      </select>
+    </div>
+    <div class="field"><label>当前状态</label>
+      <select id="inStatus">
+        <option>未建联</option><option>已发送</option><option>已回复</option>
+        <option>沟通中</option><option>产品确认</option><option>合同阶段</option>
+        <option>已婉拒</option><option>转入复用池</option>
+      </select>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:.8rem"><label>备注</label><textarea id="inNotes" placeholder="内容风格、合作评估、特别观察..."></textarea></div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="addBtn" onclick="addCreator()"><span id="addBtnText">+ 添加并分析</span></button>
+    <button class="btn btn-ghost" onclick="clearForm()">清空表单</button>
+    <button class="btn btn-green" onclick="exportCSV()" style="margin-left:auto">↓ 导出 Excel（对齐收集池格式）</button>
+  </div>
+</div>
+
+<div id="discoverStatus" class="status-bar"></div>
+
+<div class="stats-strip">
+  <div class="stat-cell"><div class="stat-label">已记录达人</div><div class="stat-value" id="statTotal">0</div></div>
+  <div class="stat-cell"><div class="stat-label">优质候选 ER≥5%</div><div class="stat-value" id="statGood">0</div></div>
+  <div class="stat-cell"><div class="stat-label">已获取邮箱</div><div class="stat-value" id="statEmail">0</div></div>
+  <div class="stat-cell"><div class="stat-label">适合合作</div><div class="stat-value" id="statFit">0</div></div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-header-title">达人数据库</div>
+    <div class="table-actions">
+      <button class="btn btn-ghost" onclick="clearAll()" style="font-size:.68rem;padding:.35rem .7rem">清空全部</button>
+    </div>
+  </div>
+  <div id="tableContainer">
+    <div class="empty-state"><div class="diamond">◇</div><p>尚未添加任何达人 · 在上方填写信息开始</p></div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:2rem">
+  <div class="panel-title">YouTube API Key 配置</div>
+  <div class="g13">
+    <div class="field"><label>API Key（填入后自动保存）</label><input type="password" id="ytKey" placeholder="AIza..." oninput="saveKey()"></div>
+    <div style="display:flex;align-items:flex-end"><button class="btn btn-ghost" onclick="testKey()">测试连通</button></div>
+  </div>
+  <p style="font-size:.72rem;color:var(--tx3);margin-top:.6rem;font-family:'DM Mono',monospace;line-height:1.6">
+    获取方式：<a href="https://console.cloud.google.com" target="_blank" style="color:var(--blue)">console.cloud.google.com</a> → 启用 YouTube Data API v3 → 凭据 → 创建 API 密钥。免费，每日 10,000 次配额。
+  </p>
+</div>
+
+</div><!-- /tab-discover -->
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  TAB 2: POST TRACKER                      -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-posts" class="tab-panel">
+
+<div class="note-box">
+  <strong>YouTube 视频：</strong>粘贴视频链接自动拉取播放量/点赞/评论并计算互动率（需 API Key）<br>
+  <strong>Instagram Reels / TikTok / Post：</strong>平台限制无法自动拉取，手动填入数据后自动计算互动率<br>
+  数据将保存在本地，可随时查看历史记录
+</div>
+
+<div class="panel">
+  <div class="panel-title">添加合作内容</div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>达人姓名</label><input id="ptCreator" placeholder="tamsmith"></div>
+    <div class="field"><label>平台</label>
+      <select id="ptPlatform">
+        <option>YouTube</option><option>Instagram Reels</option><option>Instagram Post</option>
+        <option>TikTok</option><option>Pinterest</option>
+      </select>
+    </div>
+    <div class="field" style="grid-column:span 2"><label>内容链接（YouTube 自动拉取数据）</label><input id="ptUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
+  </div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>观看/播放量</label><input type="number" id="ptViews" placeholder="5000（YouTube自动填充）"></div>
+    <div class="field"><label>点赞量</label><input type="number" id="ptLikes" placeholder="400"></div>
+    <div class="field"><label>评论量</label><input type="number" id="ptComments" placeholder="35"></div>
+    <div class="field"><label>链接点击量（可选）</label><input type="number" id="ptClicks" placeholder="128"></div>
+  </div>
+  <div class="g2">
+    <div class="field"><label>粉丝量（计算覆盖率用）</label><input type="number" id="ptFollowers" placeholder="136000"></div>
+    <div class="field"><label>备注</label><input id="ptNotes" placeholder="合作效果评估..."></div>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="ptAddBtn" onclick="addPost()"><span id="ptBtnText">+ 添加并计算</span></button>
+    <button class="btn btn-ghost" onclick="clearPostForm()">清空</button>
+    <button class="btn btn-green" onclick="exportPostsCSV()" style="margin-left:auto">↓ 导出内容数据</button>
+  </div>
+</div>
+
+<div id="postsStatus" class="status-bar"></div>
+
+<div id="postsContainer">
+  <div class="empty-state"><div class="diamond">◇</div><p>尚未添加任何合作内容记录</p></div>
+</div>
+
+</div><!-- /tab-posts -->
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  TAB 3: UTM & SHORT LINK                  -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-utm" class="tab-panel">
+
+<div class="note-box">
+  <strong>UTM 参数生成：</strong>为每位 KOL 生成带追踪参数的专属链接，便于在 GA4 / Shopify 中识别来源<br>
+  <strong>短链：</strong>使用 TinyURL 免费 API 生成短链，自定义别名包含 doveggs 品牌名（格式：tinyurl.com/doveggs-姓名）
+</div>
+
+<div class="panel">
+  <div class="panel-title">生成 KOL 专属追踪链接</div>
+  <div class="g2" style="margin-bottom:.8rem">
+    <div class="field"><label>目标页面 URL</label><input id="utmBase" value="https://www.doveggs-seattle.com" placeholder="https://www.doveggs-seattle.com/products/..."></div>
+    <div class="field"><label>达人姓名（用于 utm_content 和短链别名）</label><input id="utmCreator" placeholder="melody-tea"></div>
+  </div>
+  <div class="g4" style="margin-bottom:.8rem">
+    <div class="field"><label>utm_source（平台）</label>
+      <select id="utmSource"><option>instagram</option><option>tiktok</option><option>youtube</option><option>pinterest</option></select>
+    </div>
+    <div class="field"><label>utm_medium</label>
+      <select id="utmMedium"><option>influencer</option><option>ugc</option><option>organic</option></select>
+    </div>
+    <div class="field"><label>utm_campaign</label><input id="utmCampaign" value="kol-exchange-2025" placeholder="kol-exchange-2025"></div>
+    <div class="field"><label>自定义短链后缀（可选）</label><input id="utmSlug" placeholder="自动生成: doveggs-姓名"></div>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" onclick="generateUTM()">生成 UTM 链接</button>
+    <button class="btn btn-blue" id="shortBtn" onclick="generateShortLink()" disabled>生成短链</button>
+  </div>
+
+  <div id="utmResult" style="display:none">
+    <div class="utm-result" id="utmFull"></div>
+    <div class="copy-row">
+      <button class="btn btn-ghost" onclick="copyText('utmFull')">复制完整 UTM 链接</button>
+      <span class="copied-badge" id="copyBadge1">已复制 ✓</span>
+    </div>
+  </div>
+
+  <div id="shortResult" style="display:none">
+    <div style="margin-top:1rem;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem">短链结果</div>
+    <div class="utm-result" id="shortUrl" style="color:var(--green)"></div>
+    <div class="copy-row">
+      <button class="btn btn-ghost" onclick="copyText('shortUrl')">复制短链</button>
+      <span class="copied-badge" id="copyBadge2">已复制 ✓</span>
+    </div>
+  </div>
+</div>
+
+<div id="utmStatus" class="status-bar"></div>
+
+<!-- Saved links -->
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-header-title">已生成链接记录</div>
+    <button class="btn btn-ghost" onclick="clearLinks()" style="font-size:.68rem;padding:.35rem .7rem">清空</button>
+  </div>
+  <div id="linksContainer">
+    <div class="empty-state"><div class="diamond">◇</div><p>尚未生成任何链接</p></div>
+  </div>
+</div>
+
+</div><!-- /tab-utm -->
+
+</div><!-- /container -->
+
+<script>
+// ── STATE ──
+let creators = JSON.parse(localStorage.getItem('de_creators') || '[]');
+let posts     = JSON.parse(localStorage.getItem('de_posts')    || '[]');
+let links     = JSON.parse(localStorage.getItem('de_links')    || '[]');
+
+// ── API KEY ──
+const keyInput = document.getElementById('ytKey');
+let YT_KEY = localStorage.getItem('de_ytkey') || '';
+if (keyInput && YT_KEY) keyInput.value = YT_KEY;
+function saveKey(){ YT_KEY = keyInput.value.trim(); localStorage.setItem('de_ytkey', YT_KEY); }
+async function testKey(){
+  if(!YT_KEY){ setStatus('discoverStatus','请先填入 API Key','error'); return; }
+  setStatus('discoverStatus','测试中...','info');
+  try{
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id&id=UCVHdiSIPt7G6HMBE7qYlN3A&key=${YT_KEY}`);
+    const d = await r.json();
+    if(d.items) setStatus('discoverStatus','✓ API Key 有效，连接正常','success');
+    else setStatus('discoverStatus','API 返回异常：'+JSON.stringify(d.error?.message),'error');
+  } catch(e){ setStatus('discoverStatus','连接失败：'+e.message,'error'); }
+}
+
+// ── TABS ──
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const ids=['discover','posts','utm'];
+    t.classList.toggle('active', ids[i]===id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ── STATUS ──
+function setStatus(id, msg, type){
+  const el=document.getElementById(id);
+  el.textContent=msg; el.className='status-bar '+type;
+}
+function clearStatus(id){ setTimeout(()=>{ const el=document.getElementById(id); if(el) el.className='status-bar'; },3500); }
+
+// ── YOUTUBE FETCH ──
+async function fetchYTChannel(url){
+  if(!YT_KEY) return {error:'no_key'};
+  const hm=url.match(/@([^/?&\s]+)/);
+  const im=url.match(/channel\/([a-zA-Z0-9_-]+)/);
+  const handle=hm?hm[1]:null, chId=im?im[1]:null;
+  try{
+    let cid=chId;
+    if(handle&&!cid){
+      const r=await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id,statistics,snippet&forHandle=${handle}&key=${YT_KEY}`);
+      const d=await r.json();
+      if(d.items?.length){ cid=d.items[0].id; }
+    }
+    if(!cid) return {error:'not_found'};
+    const cr=await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${cid}&key=${YT_KEY}`);
+    const cd=await cr.json();
+    if(!cd.items?.length) return {error:'not_found'};
+    const stats=cd.items[0].statistics;
+    const vr=await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${cid}&maxResults=10&order=date&type=video&key=${YT_KEY}`);
+    const vd=await vr.json();
+    const ids=(vd.items||[]).map(i=>i.id.videoId).filter(Boolean).join(',');
+    let aV=0,aL=0,aC=0,n=0;
+    if(ids){
+      const sr=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${ids}&key=${YT_KEY}`);
+      const sd=await sr.json();
+      (sd.items||[]).forEach(v=>{ aV+=+v.statistics.viewCount||0; aL+=+v.statistics.likeCount||0; aC+=+v.statistics.commentCount||0; n++; });
+      if(n){ aV=Math.round(aV/n); aL=Math.round(aL/n); aC=Math.round(aC/n); }
+    }
+    return { subscribers:+stats.subscriberCount||0, avgViews:aV, avgLikes:aL, avgComments:aC };
+  } catch(e){ return {error:e.message}; }
+}
+
+async function fetchYTVideo(url){
+  if(!YT_KEY) return {error:'no_key'};
+  const vm=url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if(!vm) return {error:'invalid_url'};
+  const vid=vm[1];
+  try{
+    const r=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${vid}&key=${YT_KEY}`);
+    const d=await r.json();
+    if(!d.items?.length) return {error:'not_found'};
+    const s=d.items[0].statistics;
+    return { views:+s.viewCount||0, likes:+s.likeCount||0, comments:+s.commentCount||0, title:d.items[0].snippet.title };
+  } catch(e){ return {error:e.message}; }
+}
+
+// ── HELPERS ──
+function calcER(v,l,c){ if(!v) return null; return (l+c)/v*100; }
+function erClass(er){ if(er===null) return 'er-na'; if(er>=8) return 'er-excellent'; if(er>=4) return 'er-good'; if(er>=2) return 'er-average'; return 'er-low'; }
+function erLabel(er){ if(er===null) return '—'; return er.toFixed(1)+'%'; }
+function fmt(n){ if(!n&&n!==0) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e4) return (n/1e4).toFixed(1)+'万'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return ''+n; }
+function bCls(p){ const m={YouTube:'badge-youtube',Instagram:'badge-instagram','Instagram Reels':'badge-instagram','Instagram Post':'badge-instagram',TikTok:'badge-tiktok',Pinterest:'badge-pinterest',Reddit:'badge-reddit'}; return m[p]||'badge-youtube'; }
+function nextId(arr){ return arr.length>0?Math.max(...arr.map(x=>x.id))+1:1; }
+
+// ── ADD CREATOR ──
+async function addCreator(){
+  const name=document.getElementById('inName').value.trim();
+  if(!name){ setStatus('discoverStatus','请填写达人姓名','error'); return; }
+  const btn=document.getElementById('addBtn'); btn.disabled=true;
+  document.getElementById('addBtnText').innerHTML='<span class="spinner"></span> 分析中...';
+  const platform=document.getElementById('inPlatform').value;
+  const url=document.getElementById('inUrl').value.trim();
+  let followers=+document.getElementById('inFollowers').value||0;
+  let avgViews=+document.getElementById('inViews').value||0;
+  let avgLikes=+document.getElementById('inLikes').value||0;
+  let avgComments=+document.getElementById('inComments').value||0;
+  if(platform==='YouTube'&&url){
+    setStatus('discoverStatus','正在通过 YouTube API 获取数据...','info');
+    const d=await fetchYTChannel(url);
+    if(d&&!d.error){ followers=d.subscribers||followers; avgViews=d.avgViews||avgViews; avgLikes=d.avgLikes; avgComments=d.avgComments; setStatus('discoverStatus','✓ YouTube 数据已自动获取（近10条视频均值）','success'); }
+    else if(d?.error==='no_key') setStatus('discoverStatus','API Key 未配置，使用手动数据','info');
+    else setStatus('discoverStatus','API 获取失败，使用手动数据','info');
+  }
+  const er=calcER(avgViews,avgLikes,avgComments);
+  let rating='—';
+  if(er!==null){ if(er>=8)rating='⭐⭐⭐ 优先'; else if(er>=4)rating='⭐⭐ 良好'; else if(er>=2)rating='⭐ 一般'; else rating='❌ 偏低'; }
+  const c={ id:nextId(creators), seq:creators.length+1, name, platform, url, category:document.getElementById('inCategory').value.trim(), country:document.getElementById('inCountry').value.trim(), followers, avgViews, avgLikes, avgComments, er, rating, email:document.getElementById('inEmail').value.trim(), agent:document.getElementById('inAgent').value.trim(), agentEmail:document.getElementById('inAgentEmail').value.trim(), fit:document.getElementById('inFit').value, content:document.getElementById('inContent').value.trim(), budget:document.getElementById('inBudget').value, status:document.getElementById('inStatus').value, notes:document.getElementById('inNotes').value.trim(), date:document.getElementById('inDate').value||new Date().toISOString().split('T')[0] };
+  creators.push(c); save(); renderTable(); updateStats(); clearForm();
+  btn.disabled=false; document.getElementById('addBtnText').textContent='+ 添加并分析';
+  clearStatus('discoverStatus');
+}
+
+function clearForm(){
+  ['inName','inUrl','inCategory','inCountry','inFollowers','inViews','inLikes','inComments','inEmail','inAgent','inAgentEmail','inNotes','inDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('inPlatform').value='YouTube';
+  document.getElementById('inFit').value='';
+  document.getElementById('inBudget').value='';
+  document.getElementById('inStatus').value='未建联';
+}
+function deleteCreator(id){ creators=creators.filter(c=>c.id!==id); save(); renderTable(); updateStats(); }
+function clearAll(){ if(!creators.length)return; if(confirm('确认清空所有达人数据？')) { creators=[]; save(); renderTable(); updateStats(); } }
+
+function renderTable(){
+  const c=document.getElementById('tableContainer');
+  if(!creators.length){ c.innerHTML='<div class="empty-state"><div class="diamond">◇</div><p>尚未添加任何达人 · 在上方填写信息开始</p></div>'; return; }
+  const rows=creators.map(r=>`<tr>
+    <td class="num" style="color:var(--tx3)">${r.seq}</td>
+    <td class="name-cell"><div>${r.name}</div>${r.url?`<a href="${r.url}" target="_blank">↗ 查看</a>`:''}</td>
+    <td><span class="platform-badge ${bCls(r.platform)}">${r.platform}</span></td>
+    <td style="font-size:.72rem">${r.country||'—'}</td>
+    <td class="num">${fmt(r.followers)}</td>
+    <td class="num">${fmt(r.avgViews)}</td>
+    <td><span class="er-pill ${erClass(r.er)}">${erLabel(r.er)}</span></td>
+    <td style="font-size:.72rem;color:var(--tx2)">${r.rating}</td>
+    <td class="email-cell">${r.email||'—'}</td>
+    <td style="font-size:.7rem;color:var(--tx2)">${r.fit||'—'}</td>
+    <td style="font-size:.7rem;color:var(--tx2)">${r.status}</td>
+    <td style="font-size:.7rem;color:var(--tx3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.notes||''}">${r.notes||'—'}</td>
+    <td><button class="btn btn-danger" onclick="deleteCreator(${r.id})">删除</button></td>
+  </tr>`).join('');
+  c.innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>达人</th><th>平台</th><th>地区</th><th>粉丝量</th><th>均播放</th><th>互动率</th><th>评级</th><th>邮箱</th><th>适合合作</th><th>状态</th><th>备注</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent=creators.length;
+  document.getElementById('statGood').textContent=creators.filter(c=>c.er>=5).length;
+  document.getElementById('statEmail').textContent=creators.filter(c=>c.email&&c.email.includes('@')).length;
+  document.getElementById('statFit').textContent=creators.filter(c=>c.fit==='✅ 适合').length;
+}
+
+// ── EXPORT CSV (aligned to 达人收集池 headers) ──
+function exportCSV(){
+  if(!creators.length){ setStatus('discoverStatus','没有数据可导出','error'); return; }
+  const headers=['编号','达人姓名','账号链接','平台','国家/地区','内容垂类/风格','粉丝量','平均播放量','互动率','综合评级','联系邮箱','代理人姓名','代理人邮箱','是否适合合作','建议合作内容','建议产品预算','建联日期','当前状态','备注'];
+  const rows=creators.map(c=>[c.seq,c.name,c.url||'',c.platform,c.country||'',c.category||'',c.followers||'',c.avgViews||'',c.er!==null?c.er.toFixed(1)+'%':'',c.rating||'',c.email||'',c.agent||'',c.agentEmail||'',c.fit||'',c.content||'',c.budget||'',c.date,c.status,c.notes||'']);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`DovEggs_KOL_达人收集池_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  setStatus('discoverStatus','✓ 已导出（对齐达人收集池格式，可直接粘贴到表格）','success');
+  clearStatus('discoverStatus');
+}
+
+// ── POST TRACKER ──
+async function addPost(){
+  const creator=document.getElementById('ptCreator').value.trim();
+  const platform=document.getElementById('ptPlatform').value;
+  const url=document.getElementById('ptUrl').value.trim();
+  if(!creator){ setStatus('postsStatus','请填写达人姓名','error'); return; }
+  const btn=document.getElementById('ptAddBtn'); btn.disabled=true;
+  document.getElementById('ptBtnText').innerHTML='<span class="spinner"></span> 获取中...';
+  let views=+document.getElementById('ptViews').value||0;
+  let likes=+document.getElementById('ptLikes').value||0;
+  let comments=+document.getElementById('ptComments').value||0;
+  let title='';
+  if(platform==='YouTube'&&url){
+    setStatus('postsStatus','正在拉取 YouTube 视频数据...','info');
+    const d=await fetchYTVideo(url);
+    if(d&&!d.error){ views=d.views; likes=d.likes; comments=d.comments; title=d.title||''; setStatus('postsStatus','✓ YouTube 视频数据已自动拉取','success'); }
+    else if(d?.error==='no_key') setStatus('postsStatus','API Key 未配置，使用手动数据','info');
+    else setStatus('postsStatus','拉取失败，使用手动数据','info');
+  }
+  const followers=+document.getElementById('ptFollowers').value||0;
+  const clicks=+document.getElementById('ptClicks').value||0;
+  const er=calcER(views,likes,comments);
+  const coverageRate=followers>0?(views/followers*100):null;
+  const likeRate=views>0?(likes/views*100):null;
+  const commentRate=views>0?(comments/views*100):null;
+  const clickRate=views>0&&clicks>0?(clicks/views*100):null;
+  const p={id:nextId(posts),creator,platform,url,title,views,likes,comments,clicks,followers,er,coverageRate,likeRate,commentRate,clickRate,notes:document.getElementById('ptNotes').value.trim(),date:new Date().toISOString().split('T')[0]};
+  posts.push(p); saveP(); renderPosts(); clearPostForm();
+  btn.disabled=false; document.getElementById('ptBtnText').textContent='+ 添加并计算';
+  clearStatus('postsStatus');
+}
+
+function clearPostForm(){ ['ptCreator','ptUrl','ptViews','ptLikes','ptComments','ptClicks','ptFollowers','ptNotes'].forEach(id=>{ document.getElementById(id).value=''; }); document.getElementById('ptPlatform').value='YouTube'; }
+
+function renderPosts(){
+  const c=document.getElementById('postsContainer');
+  if(!posts.length){ c.innerHTML='<div class="empty-state"><div class="diamond">◇</div><p>尚未添加任何合作内容记录</p></div>'; return; }
+  c.innerHTML=[...posts].reverse().map(p=>`
+    <div class="post-card">
+      <div class="post-card-header">
+        <div><span class="post-creator">${p.creator}</span> <span class="platform-badge ${bCls(p.platform)}" style="margin-left:.5rem">${p.platform}</span></div>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          ${p.url?`<a href="${p.url}" target="_blank" style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--blue)">↗ 查看内容</a>`:''}
+          <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3)">${p.date}</span>
+          <button class="btn btn-danger" onclick="deletePost(${p.id})">删除</button>
+        </div>
+      </div>
+      ${p.title?`<div style="font-size:.74rem;color:var(--tx3);font-family:'DM Mono',monospace;margin-bottom:.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</div>`:''}
+      <div class="post-metrics">
+        <div class="metric-box"><div class="metric-label">观看量</div><div class="metric-value">${fmt(p.views)}</div></div>
+        <div class="metric-box"><div class="metric-label">点赞量</div><div class="metric-value">${fmt(p.likes)}</div></div>
+        <div class="metric-box"><div class="metric-label">评论量</div><div class="metric-value">${fmt(p.comments)}</div></div>
+        <div class="metric-box"><div class="metric-label">综合互动率</div><div class="metric-value highlight"><span class="er-pill ${erClass(p.er)}">${erLabel(p.er)}</span></div></div>
+        <div class="metric-box"><div class="metric-label">覆盖率</div><div class="metric-value">${p.coverageRate!==null?p.coverageRate.toFixed(1)+'%':'—'}</div></div>
+        <div class="metric-box"><div class="metric-label">点赞率</div><div class="metric-value">${p.likeRate!==null?p.likeRate.toFixed(2)+'%':'—'}</div></div>
+        <div class="metric-box"><div class="metric-label">评论率</div><div class="metric-value">${p.commentRate!==null?p.commentRate.toFixed(2)+'%':'—'}</div></div>
+        <div class="metric-box"><div class="metric-label">链接点击量</div><div class="metric-value">${p.clicks||'—'}</div></div>
+        <div class="metric-box"><div class="metric-label">点击率</div><div class="metric-value">${p.clickRate!==null?p.clickRate.toFixed(2)+'%':'—'}</div></div>
+        <div class="metric-box"><div class="metric-label">粉丝量</div><div class="metric-value">${fmt(p.followers)}</div></div>
+      </div>
+      ${p.notes?`<div style="margin-top:.6rem;font-size:.73rem;color:var(--tx3)">${p.notes}</div>`:''}
+    </div>`).join('');
+}
+
+function deletePost(id){ posts=posts.filter(p=>p.id!==id); saveP(); renderPosts(); }
+
+function exportPostsCSV(){
+  if(!posts.length){ setStatus('postsStatus','没有数据可导出','error'); return; }
+  const headers=['达人','平台','内容链接','视频标题','观看量','点赞量','评论量','链接点击量','粉丝量','综合互动率(%)','覆盖率(%)','点赞率(%)','评论率(%)','点击率(%)','录入日期','备注'];
+  const rows=posts.map(p=>[p.creator,p.platform,p.url||'',p.title||'',p.views,p.likes,p.comments,p.clicks||'',p.followers||'',p.er!==null?p.er.toFixed(1):'',p.coverageRate!==null?p.coverageRate.toFixed(1):'',p.likeRate!==null?p.likeRate.toFixed(2):'',p.commentRate!==null?p.commentRate.toFixed(2):'',p.clickRate!==null?p.clickRate.toFixed(2):'',p.date,p.notes||'']);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'})); a.download=`DovEggs_内容数据_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+}
+
+// ── UTM & SHORT LINK ──
+let currentUTM='';
+function generateUTM(){
+  const base=document.getElementById('utmBase').value.trim();
+  const creator=document.getElementById('utmCreator').value.trim();
+  const src=document.getElementById('utmSource').value;
+  const med=document.getElementById('utmMedium').value;
+  const cam=document.getElementById('utmCampaign').value.trim();
+  if(!base){ setStatus('utmStatus','请填写目标页面 URL','error'); return; }
+  const params=new URLSearchParams({ utm_source:src, utm_medium:med, utm_campaign:cam, utm_content:creator||'kol' });
+  currentUTM=base+(base.includes('?')?'&':'?')+params.toString();
+  document.getElementById('utmFull').textContent=currentUTM;
+  document.getElementById('utmResult').style.display='block';
+  document.getElementById('shortResult').style.display='none';
+  document.getElementById('shortBtn').disabled=false;
+}
+
+async function generateShortLink(){
+  if(!currentUTM){ setStatus('utmStatus','请先生成 UTM 链接','error'); return; }
+  const creator=document.getElementById('utmCreator').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const customSlug=document.getElementById('utmSlug').value.trim()||('doveggs-'+(creator||Date.now()));
+  const btn=document.getElementById('shortBtn'); btn.disabled=true; btn.textContent='生成中...';
+  setStatus('utmStatus','正在生成短链...','info');
+  try{
+    const apiUrl=`https://tinyurl.com/api-create.php?url=${encodeURIComponent(currentUTM)}&alias=${encodeURIComponent(customSlug)}`;
+    const r=await fetch(apiUrl);
+    let short=await r.text();
+    if(short.startsWith('http')){
+      document.getElementById('shortUrl').textContent=short;
+      document.getElementById('shortResult').style.display='block';
+      setStatus('utmStatus','✓ 短链生成成功','success');
+      const link={id:nextId(links),creator:document.getElementById('utmCreator').value.trim(),platform:document.getElementById('utmSource').value,utmUrl:currentUTM,shortUrl:short,date:new Date().toISOString().split('T')[0]};
+      links.push(link); saveL(); renderLinks();
+    } else {
+      // alias taken, try random
+      const r2=await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(currentUTM)}`);
+      const s2=await r2.text();
+      if(s2.startsWith('http')){
+        document.getElementById('shortUrl').textContent=s2+' (别名已占用，使用随机短链)';
+        document.getElementById('shortResult').style.display='block';
+        setStatus('utmStatus','⚠️ 自定义别名已被占用，已生成随机短链','info');
+        const link={id:nextId(links),creator:document.getElementById('utmCreator').value.trim(),platform:document.getElementById('utmSource').value,utmUrl:currentUTM,shortUrl:s2,date:new Date().toISOString().split('T')[0]};
+        links.push(link); saveL(); renderLinks();
+      } else { setStatus('utmStatus','短链生成失败，请直接使用 UTM 长链','error'); }
+    }
+  } catch(e){ setStatus('utmStatus','短链 API 连接失败：'+e.message,'error'); }
+  btn.disabled=false; btn.textContent='生成短链';
+  clearStatus('utmStatus');
+}
+
+function renderLinks(){
+  const c=document.getElementById('linksContainer');
+  if(!links.length){ c.innerHTML='<div class="empty-state"><div class="diamond">◇</div><p>尚未生成任何链接</p></div>'; return; }
+  const rows=[...links].reverse().map(l=>`<tr>
+    <td class="name-cell">${l.creator||'—'}</td>
+    <td><span class="platform-badge ${bCls(l.platform)}">${l.platform}</span></td>
+    <td class="email-cell" style="max-width:200px">${l.shortUrl}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.utmUrl}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3)">${l.date}</td>
+    <td><button class="btn btn-ghost" style="font-size:.68rem;padding:.3rem .6rem" onclick="navigator.clipboard.writeText('${l.shortUrl}')">复制</button></td>
+    <td><button class="btn btn-danger" onclick="deleteLink(${l.id})">删除</button></td>
+  </tr>`).join('');
+  c.innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>达人</th><th>平台</th><th>短链</th><th>UTM 链接</th><th>日期</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function deleteLink(id){ links=links.filter(l=>l.id!==id); saveL(); renderLinks(); }
+function clearLinks(){ if(!links.length)return; if(confirm('确认清空所有链接记录？')){ links=[]; saveL(); renderLinks(); } }
+
+function copyText(id){
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent.replace(' (别名已占用，使用随机短链)',''));
+  const badge=id==='utmFull'?document.getElementById('copyBadge1'):document.getElementById('copyBadge2');
+  badge.classList.add('show'); setTimeout(()=>badge.classList.remove('show'),1800);
+}
+
+// ── STORAGE ──
+function save(){ localStorage.setItem('de_creators', JSON.stringify(creators)); }
+function saveP(){ localStorage.setItem('de_posts', JSON.stringify(posts)); }
+function saveL(){ localStorage.setItem('de_links', JSON.stringify(links)); }
+
+// ── INIT ──
+renderTable(); updateStats(); renderPosts(); renderLinks();
+document.getElementById('inDate').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
