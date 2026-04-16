@@ -12,12 +12,12 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--t
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.4}
 header{padding:1.8rem 2.5rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:baseline;gap:1.2rem}
 header h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--gold2);letter-spacing:-.02em}
-header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.12em;text-transform:uppercase}
+header span{font-family:'Arial',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.12em;text-transform:uppercase}
 .container{max-width:1200px;margin:0 auto;padding:2rem 2.5rem 4rem}
 
 /* TABS */
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:2rem}
-.tab{padding:.7rem 1.4rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab{padding:.7rem 1.4rem;font-family:'Arial',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab:hover{color:var(--tx2)}
 .tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .tab-panel{display:none}
@@ -25,7 +25,7 @@ header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);le
 
 /* PANEL */
 .panel{background:var(--s);border:1px solid var(--bd);border-radius:12px;padding:1.8rem;margin-bottom:1.5rem}
-.panel-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+.panel-title{font-family:'Arial',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
 .panel-title::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
 
 /* GRID */
@@ -35,15 +35,15 @@ header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);le
 .g13{display:grid;grid-template-columns:3fr 1fr;gap:.8rem}
 .g31{display:grid;grid-template-columns:1fr 3fr;gap:.8rem}
 .field{display:flex;flex-direction:column;gap:.35rem}
-label{font-size:.68rem;color:#9a9080;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
-input,select,textarea{background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:'DM Mono',monospace;font-size:.8rem;padding:.55rem .85rem;outline:none;transition:border-color .2s;width:100%}
+label{font-size:.78rem;color:#b0a898;color:#9a9080;font-family:'Arial',monospace;letter-spacing:.08em;text-transform:uppercase}
+input,select,textarea{background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:'Arial',monospace;font-size:.8rem;padding:.55rem .85rem;outline:none;transition:border-color .2s;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 input::placeholder{color:#6a6560}
 select option{background:var(--s2)}
 textarea{resize:vertical;min-height:70px;font-size:.76rem;line-height:1.6}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1.3rem;border-radius:6px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1.3rem;border-radius:6px;font-family:'Arial',monospace;font-size:.75rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
 .btn-primary{background:var(--gold);color:#0e0c0a;font-weight:500}
 .btn-primary:hover{background:var(--gold2)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed}
@@ -58,7 +58,7 @@ textarea{resize:vertical;min-height:70px;font-size:.76rem;line-height:1.6}
 .action-row{display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;align-items:center}
 
 /* STATUS */
-.status-bar{font-family:'DM Mono',monospace;font-size:.72rem;padding:.5rem 1rem;border-radius:5px;margin-bottom:1.2rem;display:none}
+.status-bar{font-family:'Arial',monospace;font-size:.72rem;padding:.5rem 1rem;border-radius:5px;margin-bottom:1.2rem;display:none}
 .status-bar.info{background:#0d1a24;border:1px solid #1e3a50;color:var(--blue);display:block}
 .status-bar.success{background:#0d1f14;border:1px solid #1e4030;color:var(--green);display:block}
 .status-bar.error{background:#1f0d0d;border:1px solid #401e1e;color:var(--red);display:block}
@@ -66,48 +66,48 @@ textarea{resize:vertical;min-height:70px;font-size:.76rem;line-height:1.6}
 /* STATS */
 .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:2rem}
 .stat-cell{background:var(--s);padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.25rem}
-.stat-label{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3)}
+.stat-label{font-family:'Arial',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:#b0a898}
 .stat-value{font-family:'DM Serif Display',serif;font-size:1.7rem;color:var(--gold2);line-height:1}
 
 /* TABLE */
 .table-wrap{background:var(--s);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
 .table-header{padding:.9rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.table-header-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:.5rem}
+.table-header-title{font-family:'Arial',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:.5rem}
 .table-header-title::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
 .table-actions{display:flex;gap:.6rem;flex-wrap:wrap}
 table{width:100%;border-collapse:collapse;font-size:.78rem}
-thead th{background:#12100e;padding:.65rem .9rem;text-align:left;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);border-bottom:1px solid var(--bd);white-space:nowrap}
+thead th{background:#12100e;padding:.65rem .9rem;text-align:left;font-family:'Arial',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#b0a898;border-bottom:1px solid var(--bd);white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--bd);transition:background .15s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#1a1714}
 td{padding:.7rem .9rem;vertical-align:middle;color:var(--tx2)}
 td.name-cell{color:var(--tx);font-weight:500;max-width:160px}
-td.name-cell a{color:var(--gold);text-decoration:none;font-family:'DM Mono',monospace;font-size:.72rem}
+td.name-cell a{color:var(--gold);text-decoration:none;font-family:'Arial',monospace;font-size:.72rem}
 td.name-cell a:hover{color:var(--gold2)}
-.platform-badge{display:inline-block;padding:.18rem .5rem;border-radius:3px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;font-weight:500}
+.platform-badge{display:inline-block;padding:.18rem .5rem;border-radius:3px;font-family:'Arial',monospace;font-size:.6rem;letter-spacing:.05em;font-weight:500}
 .badge-youtube{background:#2a1515;color:#e06060;border:1px solid #401e1e}
 .badge-instagram{background:#1e1525;color:#c080e0;border:1px solid #3a2a50}
 .badge-tiktok{background:#0d1e1e;color:#60d0c0;border:1px solid #1a3a38}
 .badge-pinterest{background:#2a1215;color:#e05060;border:1px solid #401820}
 .badge-reddit{background:#2a1a10;color:#e08040;border:1px solid #402010}
-.num{font-family:'DM Mono',monospace;font-size:.75rem}
-.er-pill{display:inline-block;padding:.16rem .5rem;border-radius:20px;font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500}
+.num{font-family:'Arial',monospace;font-size:.75rem}
+.er-pill{display:inline-block;padding:.16rem .5rem;border-radius:20px;font-family:'Arial',monospace;font-size:.7rem;font-weight:500}
 .er-excellent{background:#0d1f14;color:var(--green);border:1px solid #1e4030}
 .er-good{background:#1a1f0d;color:#a8d060;border:1px solid #2a3a10}
 .er-average{background:#1f1a0d;color:var(--amber);border:1px solid #3a2e10}
 .er-low{background:#1f0d0d;color:var(--red);border:1px solid #401e1e}
 .er-na{background:var(--s2);color:var(--tx3);border:1px solid var(--bd)}
-.email-cell{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--blue);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.email-cell{font-family:'Arial',monospace;font-size:.7rem;color:var(--blue);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty-state{text-align:center;padding:3.5rem 2rem;color:var(--tx3)}
 .empty-state .diamond{font-size:2rem;margin-bottom:.8rem;opacity:.3}
-.empty-state p{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em}
+.empty-state p{font-family:'Arial',monospace;font-size:.72rem;letter-spacing:.08em}
 .spinner{display:inline-block;width:11px;height:11px;border:1.5px solid var(--bd2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* UTM */
-.utm-result{background:#12100e;border:1px solid var(--bd);border-radius:6px;padding:.8rem 1rem;font-family:'DM Mono',monospace;font-size:.74rem;color:var(--blue);word-break:break-all;line-height:1.5;margin-top:.8rem}
+.utm-result{background:#12100e;border:1px solid var(--bd);border-radius:6px;padding:.8rem 1rem;font-family:'Arial',monospace;font-size:.74rem;color:var(--blue);word-break:break-all;line-height:1.5;margin-top:.8rem}
 .copy-row{display:flex;align-items:center;gap:.6rem;margin-top:.5rem}
-.copied-badge{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--green);opacity:0;transition:opacity .3s}
+.copied-badge{font-family:'Arial',monospace;font-size:.68rem;color:var(--green);opacity:0;transition:opacity .3s}
 .copied-badge.show{opacity:1}
 
 /* POST TRACKER */
@@ -116,8 +116,8 @@ td.name-cell a:hover{color:var(--gold2)}
 .post-creator{font-weight:600;color:var(--tx)}
 .post-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:.6rem}
 .metric-box{background:var(--s);border:1px solid var(--bd);border-radius:5px;padding:.45rem .6rem;text-align:center}
-.metric-label{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin-bottom:.2rem}
-.metric-value{font-family:'DM Mono',monospace;font-size:.9rem;color:var(--tx)}
+.metric-label{font-family:'Arial',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:#b0a898;margin-bottom:.2rem}
+.metric-value{font-family:'Arial',monospace;font-size:.9rem;color:var(--tx)}
 .metric-value.highlight{color:var(--gold2)}
 
 /* NOTE BOX */
@@ -204,6 +204,8 @@ td.name-cell a:hover{color:var(--gold2)}
   <div class="field" style="margin-bottom:.8rem"><label>备注</label><textarea id="inNotes" placeholder="内容风格、合作评估、特别观察..."></textarea></div>
   <div class="action-row">
     <button class="btn btn-primary" id="addBtn" onclick="addCreator()"><span id="addBtnText">+ 添加并分析</span></button>
+    <button class="btn btn-green" onclick="exportLinksCSV()" style="font-size:.68rem;padding:.35rem .7rem">↓ 导出链接记录</button>
+    <button class="btn btn-ghost" onclick="clearLinks()" style="font-size:.68rem;padding:.35rem .7rem">清空</button>
     <button class="btn btn-ghost" onclick="clearForm()">清空表单</button>
     <button class="btn btn-green" onclick="exportCSV()" style="margin-left:auto">↓ 导出 Excel（对齐收集池格式）</button>
   </div>
@@ -236,7 +238,7 @@ td.name-cell a:hover{color:var(--gold2)}
     <div class="field"><label>API Key（填入后自动保存）</label><input type="password" id="ytKey" placeholder="AIza..." oninput="saveKey()"></div>
     <div style="display:flex;align-items:flex-end"><button class="btn btn-ghost" onclick="testKey()">测试连通</button></div>
   </div>
-  <p style="font-size:.72rem;color:var(--tx3);margin-top:.6rem;font-family:'DM Mono',monospace;line-height:1.6">
+  <p style="font-size:.72rem;color:var(--tx3);margin-top:.6rem;font-family:'Arial',monospace;line-height:1.6">
     获取方式：<a href="https://console.cloud.google.com" target="_blank" style="color:var(--blue)">console.cloud.google.com</a> → 启用 YouTube Data API v3 → 凭据 → 创建 API 密钥。免费，每日 10,000 次配额。
   </p>
 </div>
@@ -333,7 +335,7 @@ td.name-cell a:hover{color:var(--gold2)}
   </div>
 
   <div id="shortResult" style="display:none">
-    <div style="margin-top:1rem;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem">短链结果</div>
+    <div style="margin-top:1rem;font-family:'Arial',monospace;font-size:.65rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem">短链结果</div>
     <div class="utm-result" id="shortUrl" style="color:var(--green)"></div>
     <div class="copy-row">
       <button class="btn btn-ghost" onclick="copyText('shortUrl')">复制短链</button>
@@ -574,12 +576,12 @@ function renderPosts(){
       <div class="post-card-header">
         <div><span class="post-creator">${p.creator}</span> <span class="platform-badge ${bCls(p.platform)}" style="margin-left:.5rem">${p.platform}</span></div>
         <div style="display:flex;align-items:center;gap:.8rem">
-          ${p.url?`<a href="${p.url}" target="_blank" style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--blue)">↗ 查看内容</a>`:''}
-          <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3)">${p.date}</span>
+          ${p.url?`<a href="${p.url}" target="_blank" style="font-family:'Arial',monospace;font-size:.7rem;color:var(--blue)">↗ 查看内容</a>`:''}
+          <span style="font-family:'Arial',monospace;font-size:.65rem;color:var(--tx3)">${p.date}</span>
           <button class="btn btn-danger" onclick="deletePost(${p.id})">删除</button>
         </div>
       </div>
-      ${p.title?`<div style="font-size:.74rem;color:var(--tx3);font-family:'DM Mono',monospace;margin-bottom:.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</div>`:''}
+      ${p.title?`<div style="font-size:.74rem;color:var(--tx3);font-family:'Arial',monospace;margin-bottom:.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</div>`:''}
       <div class="post-metrics">
         <div class="metric-box"><div class="metric-label">观看量</div><div class="metric-value">${fmt(p.views)}</div></div>
         <div class="metric-box"><div class="metric-label">点赞量</div><div class="metric-value">${fmt(p.likes)}</div></div>
@@ -662,18 +664,33 @@ function renderLinks(){
   const rows=[...links].reverse().map(l=>`<tr>
     <td class="name-cell">${l.creator||'—'}</td>
     <td><span class="platform-badge ${bCls(l.platform)}">${l.platform}</span></td>
-    <td class="email-cell" style="max-width:200px">${l.shortUrl}</td>
-    <td style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.utmUrl}</td>
+    <td class="email-cell" style="max-width:200px;cursor:pointer" title="点击复制短链" onclick="copyCell(this,'${l.shortUrl.replace(/'/g,"\\'")}')"><span>${l.shortUrl}</span> <span style="font-size:.6rem;color:var(--tx3);margin-left:.3rem">⎘</span></td>
+    <td style="font-family:'DM Mono',monospace;font-size:.65rem;color:#9a9080;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="点击复制UTM链接" onclick="copyCell(this,'${l.utmUrl.replace(/'/g,"\\'")}')"><span>${l.utmUrl}</span> <span style="font-size:.6rem;color:var(--tx3);margin-left:.3rem">⎘</span></td>
     <td style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--tx3)">${l.date}</td>
-    <td><button class="btn btn-ghost" style="font-size:.68rem;padding:.3rem .6rem" onclick="navigator.clipboard.writeText('${l.shortUrl}')">复制</button></td>
     <td><button class="btn btn-danger" onclick="deleteLink(${l.id})">删除</button></td>
   </tr>`).join('');
-  c.innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>达人</th><th>平台</th><th>短链</th><th>UTM 链接</th><th>日期</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  c.innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>达人</th><th>平台</th><th>短链（点击复制）</th><th>UTM 链接（点击复制）</th><th>日期</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function deleteLink(id){ links=links.filter(l=>l.id!==id); saveL(); renderLinks(); }
 function clearLinks(){ if(!links.length)return; if(confirm('确认清空所有链接记录？')){ links=[]; saveL(); renderLinks(); } }
+function copyCell(el, text){
+  navigator.clipboard.writeText(text);
+  const orig=el.style.background;
+  el.style.background='#1a3020';
+  setTimeout(()=>{ el.style.background=orig; },800);
+}
 
+function exportLinksCSV(){
+  if(!links.length){ setStatus('utmStatus','没有数据可导出','error'); return; }
+  const headers=['达人','平台','短链','UTM链接','生成日期'];
+  const rows=links.map(l=>[l.creator||'',l.platform,l.shortUrl||'',l.utmUrl||'',l.date]);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`DovEggs_UTM链接_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
 function copyText(id){
   const el=document.getElementById(id);
   navigator.clipboard.writeText(el.textContent.replace(' (别名已占用，使用随机短链)',''));
