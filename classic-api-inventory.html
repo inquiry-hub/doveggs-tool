@@ -83,10 +83,10 @@
 
   /* ── UPLOAD CARDS ── */
   .upload-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
     margin-bottom: 24px;
   }
-  @media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 800px) { .upload-grid { grid-template-columns: 1fr; } }
 
   .upload-card {
     background: var(--surface);
@@ -332,6 +332,97 @@
   .spinner.visible { display: block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+
+
+  /* ── LOCATION CHECKBOXES ── */
+  .loc-check-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .loc-check-item {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+    transition: all .15s; user-select: none;
+  }
+  .loc-check-item:hover { border-color: var(--accent); }
+  .loc-check-item.checked {
+    background: rgba(79,124,255,.18);
+    border-color: var(--accent);
+  }
+  .loc-check-item input[type=checkbox] { display: none; }
+  .loc-check-item .check-icon {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; flex-shrink: 0;
+    transition: all .15s;
+  }
+  .loc-check-item.checked .check-icon {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .loc-check-item .check-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+  .loc-check-item.checked .check-label { color: var(--accent); }
+  .loc-select-all {
+    font-size: 11px; color: var(--text3); cursor: pointer;
+    text-decoration: underline; align-self: center; margin-left: 4px;
+  }
+  .loc-select-all:hover { color: var(--accent); }
+  /* ── PRICE ANALYSIS ── */
+  .price-section { margin-top: 32px; }
+  .price-region-btns { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .price-region-btn {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 6px 16px;
+    font-size: 12px; font-weight: 500; color: var(--text2);
+    cursor: pointer; transition: all .15s; font-family: var(--font);
+  }
+  .price-region-btn.active {
+    background: rgba(79,124,255,.2); border-color: var(--accent); color: var(--accent);
+  }
+  .price-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .price-tab {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px 8px 0 0; padding: 8px 20px;
+    font-size: 12px; font-weight: 500; color: var(--text2);
+    cursor: pointer; transition: all .15s; font-family: var(--font);
+  }
+  .price-tab.active { background: var(--surface); border-color: var(--border2); color: var(--text); border-bottom-color: var(--surface); }
+  .price-matrix-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 0 14px 14px 14px; overflow-x: auto; margin-bottom: 16px;
+  }
+  .price-matrix-wrap table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  .price-matrix-wrap th {
+    padding: 8px 12px; font-size: 10px; font-weight: 500; letter-spacing: .05em;
+    color: var(--text3); text-transform: uppercase; background: var(--surface2);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .price-matrix-wrap td {
+    padding: 7px 12px; font-size: 11px; border-bottom: 1px solid var(--border);
+    font-family: var(--mono); text-align: right; white-space: nowrap;
+  }
+  .price-matrix-wrap td.shape-col { text-align: left; font-family: var(--font); font-size: 12px; color: var(--text); font-weight: 500; }
+  .price-matrix-wrap tr:last-child td { border-bottom: none; }
+  .cell-warn { background: rgba(239,68,68,.15) !important; color: var(--red) !important; font-weight: 600; }
+  .cell-ok { color: var(--green); }
+  .cell-empty { color: var(--text3); }
+  .price-alert-box {
+    background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3);
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
+  }
+  .price-alert-title { font-size: 13px; font-weight: 600; color: var(--red); margin-bottom: 10px; }
+  .price-alert-item { font-size: 12px; color: var(--text2); line-height: 1.8; }
+  .price-alert-item strong { color: var(--text); }
+  .price-change-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;
+  }
+  .price-change-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .price-change-row:last-child { border-bottom: none; }
+  .change-up { color: var(--red); font-weight: 600; }
+  .change-down { color: var(--green); font-weight: 600; }
+  .change-flat { color: var(--text3); }
   /* ── FOOTER ── */
   footer {
     text-align: center;
@@ -350,7 +441,7 @@
     <h1>库存对账工具</h1>
     <p>Inventory Reconciliation · Doveggs</p>
   </div>
-  <span class="badge">v1.3</span>
+  <span class="badge">v1.8</span>
 </header>
 
 <main>
@@ -378,17 +469,69 @@
         <div class="file-name" id="sto-name" style="display:none"></div>
       </div>
     </div>
+
+    <div class="upload-card" style="border-color: rgba(124,95,255,.3);">
+      <div class="card-label"><span class="dot" style="background:var(--accent2)"></span>供应商旧库存表（价格对比用）</div>
+      <div class="card-sub">Old Supplier Inventory · 用于价格变化分析（可选）</div>
+      <div class="drop-zone" id="old-sup-drop">
+        <input type="file" id="old-sup-file" accept=".xlsx,.xls">
+        <div class="drop-icon">📊</div>
+        <div class="drop-text">拖拽旧版供应商表，或 <strong>点击选择</strong></div>
+        <div class="file-name" id="old-sup-name" style="display:none"></div>
+      </div>
+    </div>
   </div>
 
   <!-- OPTIONS -->
   <div class="options-card">
     <div class="section-label" style="margin-bottom:10px">供应商表类型 Supplier Sheet Type</div>
-    <div class="options-row">
+    <div class="options-row" style="margin-bottom:16px">
       <span class="option-label">供应商表：</span>
       <div class="toggle-group">
         <button class="toggle-btn active" id="btn-filtered" onclick="setSupType('filtered')">已筛选 Sheet</button>
         <button class="toggle-btn" id="btn-raw" onclick="setSupType('raw')">原生表（自动筛选）</button>
       </div>
+    </div>
+    <div class="section-label" style="margin-bottom:8px">地区筛选 Location Filter</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">选择纳入对账和价格分析的供应商地区（多选）</div>
+    <div class="loc-check-group" id="loc-check-group">
+      <label class="loc-check-item checked" data-loc="HONG KONG" onclick="toggleLoc(this)">
+        <input type="checkbox" checked>
+        <span class="check-icon">✓</span>
+        <span class="check-label">Hong Kong</span>
+      </label>
+      <label class="loc-check-item checked" data-loc="INDIA" onclick="toggleLoc(this)">
+        <input type="checkbox" checked>
+        <span class="check-icon">✓</span>
+        <span class="check-label">India</span>
+      </label>
+      <label class="loc-check-item checked" data-loc="SURAT" onclick="toggleLoc(this)">
+        <input type="checkbox" checked>
+        <span class="check-icon">✓</span>
+        <span class="check-label">Surat</span>
+      </label>
+      <label class="loc-check-item" data-loc="LONDON" onclick="toggleLoc(this)">
+        <input type="checkbox">
+        <span class="check-icon"></span>
+        <span class="check-label">London</span>
+      </label>
+      <label class="loc-check-item" data-loc="ANTWERP" onclick="toggleLoc(this)">
+        <input type="checkbox">
+        <span class="check-icon"></span>
+        <span class="check-label">Antwerp</span>
+      </label>
+      <label class="loc-check-item" data-loc="NEW YORK" onclick="toggleLoc(this)">
+        <input type="checkbox">
+        <span class="check-icon"></span>
+        <span class="check-label">New York</span>
+      </label>
+      <label class="loc-check-item" data-loc="DUBAI" onclick="toggleLoc(this)">
+        <input type="checkbox">
+        <span class="check-icon"></span>
+        <span class="check-label">Dubai</span>
+      </label>
+      <span class="loc-select-all" onclick="selectAllLocs(true)">全选</span>
+      <span class="loc-select-all" onclick="selectAllLocs(false)">清空</span>
     </div>
   </div>
 
@@ -424,6 +567,37 @@
     <div class="section-label" style="margin-top:24px">形状汇总（1ct+ DEF色）Shape Summary — ≥1ct D/E/F</div>
     <div class="table-wrap" id="table-def"></div>
 
+
+    <!-- PRICE ANALYSIS -->
+    <div class="price-section" id="price-section" style="display:none">
+      <div class="section-label">价格分析 Price Analysis（供应商新旧对比）</div>
+
+      <!-- Alert box -->
+      <div class="price-alert-box" id="price-alert-box" style="display:none">
+        <div class="price-alert-title">⚠️ 低价预警 Price Alert（$/ct &lt; $90，且占总库存 ≥ 20%）</div>
+        <div class="price-alert-item" id="price-alert-content"></div>
+      </div>
+
+      <!-- Region filter -->
+      <div class="price-region-btns">
+        <span style="font-size:12px;color:var(--text2);align-self:center;margin-right:4px">地区筛选：</span>
+        <button class="price-region-btn active" id="prb-hk" onclick="setPriceRegion('hk')">已选地区 Selected</button>
+        <button class="price-region-btn" id="prb-all" onclick="setPriceRegion('all')">全部地区 All Regions</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="price-tabs">
+        <button class="price-tab active" id="ptab-def" onclick="setPriceTab('def')">💎 DEF 色</button>
+        <button class="price-tab" id="ptab-fancy" onclick="setPriceTab('fancy')">🌈 彩色 Fancy</button>
+      </div>
+
+      <!-- Matrix -->
+      <div class="price-matrix-wrap" id="price-matrix"></div>
+
+      <!-- Change summary -->
+      <div class="section-label" style="margin-top:8px" id="price-change-label" style="display:none">价格变化总览 Price Change Summary（↑涨价=红 ↓降价=绿，以新价为准）</div>
+      <div class="price-change-wrap" id="price-change-wrap" style="display:none"></div>
+    </div>
     <button class="download-btn" id="dl-btn">
       ⬇ 下载完整 Excel 对账报告 Download Full Report
     </button>
@@ -431,9 +605,36 @@
 
 </main>
 
-<footer>Doveggs Inventory Reconciliation Tool · v1.3 · 数据在本地处理，不上传服务器</footer>
+<footer>Doveggs Inventory Reconciliation Tool · v1.8 · 数据在本地处理，不上传服务器</footer>
 
 <script>
+
+// ════════════════════════════════════════════════════════════
+// PRICE ANALYSIS CONSTANTS
+// ════════════════════════════════════════════════════════════
+const WHITE_COLORS = new Set(['D','E','F','G','H','I','J','FG','EF']);
+const DEF_SET      = new Set(['D','E','F']);
+const CT_BANDS     = ['<1','1-2','2-3','3-4','4-5','5-6','6-7','7+'];
+// Locations now dynamic — see getSelectedLocs()
+
+function getCtBand(c) {
+  if(c === null || c === undefined || isNaN(c)) return null;
+  c = parseFloat(c);
+  if(c < 1)  return '<1';
+  if(c < 2)  return '1-2';
+  if(c < 3)  return '2-3';
+  if(c < 4)  return '3-4';
+  if(c < 5)  return '4-5';
+  if(c < 6)  return '5-6';
+  if(c < 7)  return '6-7';
+  return '7+';
+}
+
+function isFancy(color) {
+  const c = String(color||'').trim();
+  return c !== '' && !WHITE_COLORS.has(c);
+}
+
 // ════════════════════════════════════════════════════════════
 // CONSTANTS
 // ════════════════════════════════════════════════════════════
@@ -443,7 +644,7 @@ const TARGET_SHAPES = [
   'Step Cut Oval','Step Cut Pear','Step Cut Marquise',
   'Old Mine Oval','Old Mine Pear','Oval Rose Cut','Round Rose Cut'
 ];
-const TARGET_LOCS   = ['SURAT','INDIA','HONG KONG','HONG KONG'];
+// TARGET_LOCS is now dynamic — use getSelectedLocs() at runtime
 const EXCL_COLORS   = ['G','H','I','FG'];
 const DEF_COLORS    = ['D','E','F'];
 
@@ -472,6 +673,12 @@ const PPC_COL    = 'Metafield: custom.price_per_carat [single_line_text_field]';
 let supType = 'filtered';
 let supFile = null, stoFile = null;
 let xlsxResult = null;
+let oldSupFile  = null;
+let priceRegion = 'hk';   // 'hk' | 'all'
+let priceTab    = 'def';  // 'def' | 'fancy'
+let priceData   = null;   // computed price matrices
+
+
 
 // ════════════════════════════════════════════════════════════
 // UI HELPERS
@@ -480,6 +687,66 @@ function setSupType(t) {
   supType = t;
   document.getElementById('btn-filtered').classList.toggle('active', t==='filtered');
   document.getElementById('btn-raw').classList.toggle('active', t==='raw');
+}
+
+
+function setPriceRegion(r) {
+  priceRegion = r;
+  document.getElementById('prb-hk').classList.toggle('active', r==='hk');
+  document.getElementById('prb-all').classList.toggle('active', r==='all');
+  renderPriceMatrix();
+}
+
+function setPriceTab(t) {
+  priceTab = t;
+  document.getElementById('ptab-def').classList.toggle('active', t==='def');
+  document.getElementById('ptab-fancy').classList.toggle('active', t==='fancy');
+  renderPriceMatrix();
+}
+
+function setPriceTabFn(t) { setPriceTab(t); }
+
+
+// ════════════════════════════════════════════════════════════
+// LOCATION SELECTOR
+// ════════════════════════════════════════════════════════════
+function toggleLoc(el) {
+  el.classList.toggle('checked');
+  const icon = el.querySelector('.check-icon');
+  icon.textContent = el.classList.contains('checked') ? '✓' : '';
+}
+
+function selectAllLocs(checked) {
+  document.querySelectorAll('#loc-check-group .loc-check-item').forEach(el => {
+    const icon = el.querySelector('.check-icon');
+    if(checked) {
+      el.classList.add('checked');
+      icon.textContent = '✓';
+    } else {
+      el.classList.remove('checked');
+      icon.textContent = '';
+    }
+  });
+}
+
+function getSelectedLocs() {
+  // Returns Set of uppercase location strings currently checked
+  const locs = new Set();
+  document.querySelectorAll('#loc-check-group .loc-check-item.checked').forEach(el => {
+    const loc = el.getAttribute('data-loc').toUpperCase();
+    locs.add(loc);
+    // Hong Kong has variant spellings in supplier data
+    if(loc === 'HONG KONG') locs.add('HONG KONG');
+  });
+  return locs;
+}
+
+function getSelectedLocsLabel() {
+  const items = [];
+  document.querySelectorAll('#loc-check-group .loc-check-item.checked').forEach(el => {
+    items.push(el.querySelector('.check-label').textContent);
+  });
+  return items.length > 0 ? items.join(' + ') : '(无地区选中)';
 }
 
 function setupDrop(dropId, inputId, nameId, onFile) {
@@ -507,6 +774,7 @@ function setupDrop(dropId, inputId, nameId, onFile) {
 
 setupDrop('sup-drop','sup-file','sup-name', f => supFile = f);
 setupDrop('sto-drop','sto-file','sto-name', f => stoFile = f);
+setupDrop('old-sup-drop','old-sup-file','old-sup-name', f => oldSupFile = f);
 
 function showError(msg) {
   const el = document.getElementById('error-msg');
@@ -595,6 +863,7 @@ async function runReconciliation() {
   clearError();
   if(!supFile) { showError('请上传供应商库存表'); return; }
   if(!stoFile) { showError('请上传商店库存表');   return; }
+  if(getSelectedLocs().size === 0) { showError('请至少选择一个地区 Please select at least one location'); return; }
 
   const btn = document.getElementById('run-btn');
   const spinner = document.getElementById('spinner');
@@ -613,6 +882,7 @@ async function runReconciliation() {
     {label:'SKU 匹配', state:''},
     {label:'证书 & 价格比对', state:''},
     {label:'生成汇总与明细', state:''},
+    {label:'价格分析计算', state:''},
     {label:'构建 Excel 报告', state:''},
   ];
 
@@ -648,24 +918,35 @@ async function runReconciliation() {
         supSheetName = supWb.SheetNames.length > 1 ? supWb.SheetNames[1] : supWb.SheetNames[0];
       }
     }
-    let supRows = sheetToRows(supWb, supSheetName);
+    let supRowsRaw = sheetToRows(supWb, supSheetName);
 
     if(supType === 'raw') {
-      // Location: normalize to uppercase for comparison
-      supRows = supRows.filter(r => {
-        const loc = String(r.Location||'').toUpperCase().trim();
-        return ['SURAT','INDIA','HONG KONG'].includes(loc);
-      });
-      // Exclude G/H/I/FG colors
-      supRows = supRows.filter(r => !EXCL_COLORS.includes(String(r.Color||'').trim()));
-      // Status filter: only apply if Status column exists and has values
-      const hasStatus = supRows.length > 0 && supRows[0].Status !== undefined && supRows[0].Status !== '';
+      // For raw mode: apply color + status filters to ALL rows first (keep all locations)
+      supRowsRaw = supRowsRaw.filter(r => !EXCL_COLORS.includes(String(r.Color||'').trim()));
+      const hasStatus = supRowsRaw.length > 0 && supRowsRaw[0].Status !== undefined && supRowsRaw[0].Status !== '';
       if(hasStatus) {
-        supRows = supRows.filter(r => String(r.Status||'').trim() === 'Available');
+        supRowsRaw = supRowsRaw.filter(r => String(r.Status||'').trim() === 'Available');
       }
     }
 
-    // normalize shape and filter
+    // supRowsAll = full dataset for price analysis "All Regions" view
+    // (for 已筛选 mode this is the full 已筛选 sheet; for raw mode it's color/status filtered but ALL locations)
+    const supRowsAll = supRowsRaw.map(r => ({...r, _shapeNorm: normSupShape(r.Shape||'')}))
+                                  .filter(r => TARGET_SHAPES.includes(r._shapeNorm));
+
+    // supRows = location-filtered dataset for reconciliation
+    let supRows = supRowsRaw.filter(r => {
+      if(supType === 'raw') {
+        const loc = String(r.Location||'').toUpperCase().trim();
+        return getSelectedLocs().has(loc);
+      }
+      // 已筛选 mode: sheet already pre-filtered, apply selected locs on top
+      const loc = String(r.Location||'').toUpperCase().trim();
+      const sel = getSelectedLocs();
+      return sel.size === 0 || sel.has(loc);
+    });
+
+    // normalize shape and filter for reconciliation
     supRows = supRows.map(r => ({...r, _shapeNorm: normSupShape(r.Shape||'')}));
     supRows = supRows.filter(r => TARGET_SHAPES.includes(r._shapeNorm));
     supRows.forEach(r => {
@@ -797,13 +1078,54 @@ async function runReconciliation() {
     const sup1ctDef = rows1ctDef.reduce((a,r)=>a+getSupQty(r),0);
     const sto1ctDef = rows1ctDef.reduce((a,r)=>a+getStoQty(r),0);
 
-    // Step 6 — Build Excel
+    // Step 6 — Price analysis
     markStep(6);
+    let oldSupRows = [];
+    let oldSupRowsAll = [];
+    if(oldSupFile) {
+      const oldSupWb = await readXlsx(oldSupFile);
+      // Use same sheet detection as new supplier
+      let oldSheetName;
+      if(supType === 'raw') {
+        oldSheetName = oldSupWb.SheetNames[0];
+      } else {
+        oldSheetName = oldSupWb.SheetNames.find(n => n === '\u5df2\u7b5b\u9009' || n.trim() === '\u5df2\u7b5b\u9009');
+        if(!oldSheetName) oldSheetName = oldSupWb.SheetNames.length > 1 ? oldSupWb.SheetNames[1] : oldSupWb.SheetNames[0];
+      }
+      let rawOld = sheetToRows(oldSupWb, oldSheetName);
+      if(supType === 'raw') {
+        rawOld = rawOld.filter(r => !EXCL_COLORS.includes(String(r.Color||'').trim()));
+        const hasStatus = rawOld.length > 0 && rawOld[0].Status !== undefined && rawOld[0].Status !== '';
+        if(hasStatus) rawOld = rawOld.filter(r => String(r.Status||'').trim() === 'Available');
+      }
+      // oldSupRowsAll = all locations (for price analysis full view)
+      oldSupRowsAll = rawOld.map(r => ({...r, _shapeNorm: normSupShape(r.Shape||'')}))
+                             .filter(r => TARGET_SHAPES.includes(r._shapeNorm));
+      // oldSupRows = selected locations only
+      rawOld = rawOld.filter(r => {
+        if(supType === 'raw') {
+          const l = String(r.Location||'').toUpperCase().trim();
+          return getSelectedLocs().has(l);
+        }
+        const l = String(r.Location||'').toUpperCase().trim();
+        const sel = getSelectedLocs();
+        return sel.size === 0 || sel.has(l);
+      });
+      rawOld = rawOld.map(r => ({...r, _shapeNorm: normSupShape(r.Shape||'')}));
+      rawOld = rawOld.filter(r => TARGET_SHAPES.includes(r._shapeNorm));
+      oldSupRows = rawOld;
+    }
+
+    priceData = computePriceData(supRows, oldSupRows, supRowsAll, oldSupRowsAll);
+
+    // Step 7 — Build Excel
+    markStep(7);
     await new Promise(r => setTimeout(r, 50));
     const wb = buildExcel(allRows, rows1ctDef, ssAll, ssDef,
       {nMatch, nMissing, nExtra, nNeg, certMismatches, priceMismatches,
        supTotal: supRows.length, stoTotal: stoDedup.length,
-       sup1ctDef, sto1ctDef, getCarat, getColor, getShape, getSupQty, getStoQty});
+       sup1ctDef, sto1ctDef, getCarat, getColor, getShape, getSupQty, getStoQty,
+       supRows, oldSupRows, supRowsAll, oldSupRowsAll});
 
     setProgress(100, steps.map((s,i) => ({...s, state:'done'})));
     xlsxResult = wb;
@@ -813,6 +1135,20 @@ async function runReconciliation() {
                 supRows.length, stoDedup.length, sup1ctDef, sto1ctDef);
     renderTable('table-all', ssAll);
     renderTable('table-def', ssDef);
+
+    // render price analysis
+    const priceSection = document.getElementById('price-section');
+    priceSection.style.display = 'block';
+    // Update button labels to reflect current selection
+    const prbHk = document.getElementById('prb-hk');
+    if(prbHk) prbHk.textContent = '已选地区: ' + getSelectedLocsLabel();
+    const prbAll = document.getElementById('prb-all');
+    if(prbAll) prbAll.textContent = '全部地区 All Regions';
+    renderPriceMatrix();
+
+    // show price change section only if old file uploaded
+    document.getElementById('price-change-label').style.display = oldSupFile ? 'block' : 'none';
+    document.getElementById('price-change-wrap').style.display  = oldSupFile ? 'block' : 'none';
 
     document.getElementById('result-section').classList.add('visible');
     document.getElementById('dl-btn').onclick = downloadExcel;
@@ -918,7 +1254,8 @@ function renderTable(id, ss) {
 // ════════════════════════════════════════════════════════════
 function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
   const {nMatch, nMissing, nExtra, nNeg, certMismatches, priceMismatches,
-         supTotal, stoTotal, sup1ctDef, sto1ctDef, getCarat, getColor, getShape, getSupQty, getStoQty} = meta;
+         supTotal, stoTotal, sup1ctDef, sto1ctDef, getCarat, getColor, getShape, getSupQty, getStoQty,
+         supRows, oldSupRows, supRowsAll, oldSupRowsAll} = meta;
 
   const wb = XLSX.utils.book_new();
 
@@ -936,7 +1273,17 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
     null, null, null, null, null, null, true);
   XLSX.utils.book_append_sheet(wb, detail1ct, '1ct+ DEF明细');
 
-  // ── Sheet 4: Shape Mapping ──
+  // ── Sheet 4: DEF Price Analysis ──
+  const priceNewRows = supRowsAll || supRows;
+  const priceOldRows = oldSupRowsAll || oldSupRows || [];
+  if(priceNewRows && priceNewRows.length > 0) {
+    const defSheet = buildPriceExcelSheet(priceNewRows, priceOldRows, 'def', supRows);
+    XLSX.utils.book_append_sheet(wb, defSheet, '价格分析 DEF Price');
+    const fancySheet = buildPriceExcelSheet(priceNewRows, priceOldRows, 'fancy', supRows);
+    XLSX.utils.book_append_sheet(wb, fancySheet, '价格分析 Fancy Price');
+  }
+
+  // ── Sheet 6: Shape Mapping ──
   const mapData = [
     ['供应商形状 Supplier Shape','商店形状 Store Shape','标准形状 Normalized Shape'],
     ['Oval-M','Oval','Oval'],
@@ -953,10 +1300,10 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
   mapWs['!cols'] = [{wch:28},{wch:28},{wch:28}];
   XLSX.utils.book_append_sheet(wb, mapWs, '形状映射 Shape Mapping');
 
-  // ── Sheet 5: Notes ──
+  // ── Sheet 7: Notes ──
   const notesData = [
     ['说明项','内容'],
-    ['地区筛选 Location','SURAT + INDIA + HONG KONG（含 Hong kong）'],
+    ['地区筛选 Location', getSelectedLocsLabel()],
     ['匹配方式 Match Key','供应商 Ref.No. 与商店 SKU 均去掉所有连字符后转小写比对'],
     ['形状归一化','供应商和商店两端形状名称统一映射为标准形状后比对（见"形状映射"Sheet）'],
     ['目标形状 Target Shapes','10种主形状 + 7种特殊切工形状，共17种'],
@@ -973,6 +1320,177 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
   XLSX.utils.book_append_sheet(wb, notesWs, '说明 Notes');
 
   return wb;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// PRICE EXCEL SHEET BUILDER
+// ════════════════════════════════════════════════════════════
+function buildPriceExcelSheet(newRows, oldRows, colorFilter, selectedNewRows) {
+  // Two blocks: 全部地区 first (newRows=all locations), then 已选地区 (selectedNewRows)
+  const selectedLabel = getSelectedLocsLabel();
+  const selRows    = selectedNewRows || newRows;
+  const selOldRows = (() => {
+    // filter oldRows to selected locs
+    const sel = getSelectedLocs();
+    if(!oldRows || oldRows.length === 0 || sel.size === 0) return oldRows||[];
+    return oldRows.filter(r => sel.has(String(r.Location||'').toUpperCase().trim()));
+  })();
+
+  const regions = [
+    { key: 'all', rowsNew: newRows,  rowsOld: oldRows||[], label: '全部地区 All Regions' },
+    { key: 'hk',  rowsNew: selRows,  rowsOld: selOldRows,  label: `已选地区 Selected (${selectedLabel})` },
+  ];
+
+  const WHITE_SET = new Set(['D','E','F','G','H','I','J','FG','EF']);
+  const aoa = [];
+
+  const titleLabel = colorFilter === 'def' ? 'DEF 色（D/E/F）价格分析' : '彩色 Fancy Lab Diamond 价格分析';
+  aoa.push([titleLabel]);
+  aoa.push([`生成日期: ${new Date().toISOString().slice(0,10)}  |  单位: $/ct 平均价格  |  括号内为件数`]);
+  aoa.push([]);
+
+  for(const {key: regKey, label: regLabel, rowsNew: regRowsNew, rowsOld: regRowsOld} of regions) {
+    const colorFilter_ = c => {
+      if(colorFilter === 'def')   return new Set(['D','E','F']).has(c);
+      if(colorFilter === 'fancy') return c !== '' && !WHITE_SET.has(c);
+      return true;
+    };
+    const filterRows = r => colorFilter_(String(r.Color||'').trim());
+
+    const filteredNew = regRowsNew.filter(filterRows);
+    const filteredOld = regRowsOld.filter(filterRows);
+    const hasOld = filteredOld.length > 0;
+
+    // Build matrix for new
+    function makeMatrix(rows) {
+      const m = {};
+      for(const r of rows) {
+        const shape = normSupShape(String(r.Shape||'').trim());
+        if(!TARGET_SHAPES.includes(shape)) continue;
+        const carat = parseFloat(r.Carat);
+        const ppc   = parseFloat(r['$/ct.']);
+        const band  = getCtBand(isNaN(carat)?null:carat);
+        if(!band || isNaN(ppc)) continue;
+        if(!m[shape]) m[shape] = {};
+        if(!m[shape][band]) m[shape][band] = {sum:0, count:0};
+        m[shape][band].sum   += ppc;
+        m[shape][band].count += 1;
+      }
+      return m;
+    }
+
+    const newM = makeMatrix(filteredNew);
+    const oldM = makeMatrix(filteredOld);
+
+    // Total count for % calculation
+    const totalNewAll = regRowsNew.length;  // denominator = all items in this region scope
+
+    // Shapes and bands with data
+    const shapes = TARGET_SHAPES.filter(s => newM[s] && Object.keys(newM[s]).length > 0);
+    const bands  = CT_BANDS.filter(b => shapes.some(s => newM[s] && newM[s][b]));
+
+    aoa.push([`📍 ${regLabel}`]);
+
+    // Header row
+    const hdr = ['形状 Shape'];
+    for(const b of bands) {
+      if(hasOld) {
+        hdr.push(`${b}ct 均价(新)`, `${b}ct 均价(旧)`, `${b}ct 变化`, `${b}ct 件数`);
+      } else {
+        hdr.push(`${b}ct 均价`, `${b}ct 件数`);
+      }
+    }
+    aoa.push(hdr);
+
+    // Data rows
+    const alertRows = [];
+    for(const shape of shapes) {
+      const row = [shape];
+      for(const band of bands) {
+        const nc = newM[shape] && newM[shape][band];
+        const oc = oldM[shape] && oldM[shape][band];
+        if(!nc) {
+          if(hasOld) row.push('','','','');
+          else row.push('','');
+        } else {
+          const newAvg = nc.sum / nc.count;
+          const pctOfTotal = totalNewAll > 0 ? nc.count / totalNewAll : 0;
+          const isAlert = newAvg < 90 && pctOfTotal >= 0.20;
+          const avgStr = `$${newAvg.toFixed(1)}${isAlert?' ⚠️':''}`;
+
+          if(hasOld && oc) {
+            const oldAvg = oc.sum / oc.count;
+            const diff = newAvg - oldAvg;
+            const diffStr = diff > 0.5 ? `+$${diff.toFixed(1)}↑` : diff < -0.5 ? `-$${Math.abs(diff).toFixed(1)}↓` : '持平';
+            row.push(avgStr, `$${oldAvg.toFixed(1)}`, diffStr, nc.count);
+          } else if(hasOld) {
+            row.push(avgStr, '—', '—', nc.count);
+          } else {
+            row.push(avgStr, nc.count);
+          }
+
+          if(isAlert) alertRows.push({shape, band, avg: newAvg, count: nc.count, pct: pctOfTotal});
+        }
+      }
+      aoa.push(row);
+    }
+
+    // Alert summary
+    if(alertRows.length > 0) {
+      aoa.push([]);
+      aoa.push(['⚠️ 低价预警（均价 < $90/ct 且占总库存 ≥ 20%）']);
+      aoa.push(['形状','克拉段','均价 $/ct','件数','占比%']);
+      for(const a of alertRows) {
+        aoa.push([a.shape, a.band, `$${a.avg.toFixed(1)}`, a.count, `${(a.pct*100).toFixed(1)}%`]);
+      }
+
+      // Low-price concentration analysis
+      const lowAll = regRowsNew.filter(r => parseFloat(r['$/ct.']) < 90 && colorFilter_(String(r.Color||'').trim()));
+      if(lowAll.length > 0) {
+        aoa.push([]);
+        aoa.push(['📊 低价产品分布分析（所有 $/ct < $90 的产品）']);
+
+        // By shape
+        const byShape = {};
+        for(const r of lowAll) {
+          const s = normSupShape(String(r.Shape||'').trim());
+          if(!TARGET_SHAPES.includes(s)) continue;
+          byShape[s] = (byShape[s]||0) + 1;
+        }
+        const topShapes = Object.entries(byShape).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        aoa.push(['集中形状:', ...topShapes.map(([s,n])=>`${s}: ${n}件`)]);
+
+        // By ct band
+        const byBand = {};
+        for(const r of lowAll) {
+          const band = getCtBand(parseFloat(r.Carat));
+          if(!band) continue;
+          byBand[band] = (byBand[band]||0) + 1;
+        }
+        const topBands = Object.entries(byBand).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        aoa.push(['集中克拉段:', ...topBands.map(([b,n])=>`${b}ct: ${n}件`)]);
+
+        // By color (only for fancy tab)
+        if(colorFilter === 'fancy') {
+          const byColor = {};
+          for(const r of lowAll) {
+            const c = String(r.Color||'').trim();
+            byColor[c] = (byColor[c]||0) + 1;
+          }
+          const topColors = Object.entries(byColor).sort((a,b)=>b[1]-a[1]).slice(0,5);
+          aoa.push(['集中颜色:', ...topColors.map(([c,n])=>`${c}: ${n}件`)]);
+        }
+      }
+    }
+
+    aoa.push([]);
+    aoa.push([]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:20},...CT_BANDS.flatMap(()=>[{wch:14},{wch:14},{wch:12},{wch:8}])];
+  return ws;
 }
 
 function buildShapeSheet(ssAll, ssDef, supTotal, stoTotal, sup1ct, sto1ct) {
@@ -1085,6 +1603,226 @@ function buildDetailSheet(rows, getCarat, getColor, getShape, getSupQty, getStoQ
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [22,22,8,8,18,20,14,20,40,14,18,18,40,14,14,14,12,12,12,30].map(w=>({wch:w}));
   return ws;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// PRICE ANALYSIS ENGINE
+// ════════════════════════════════════════════════════════════
+function filterSupByRegion(rows, region) {
+  if(region === 'all') return rows;
+  // 'hk' mode: use whatever the user has checked (same as reconciliation)
+  const allowed = getSelectedLocs();
+  if(allowed.size === 0) return rows;  // nothing checked → return all
+  return rows.filter(r => allowed.has(String(r.Location||'').toUpperCase().trim()));
+}
+
+function buildPriceMatrix(rows, colorFilter, allRows) {
+  // colorFilter: 'def' | 'fancy'
+  // allRows: full supplier rows for this region (used as denominator for alert %)
+  const baseRows = allRows || rows;  // fallback to rows if allRows not provided
+
+  const filtered = rows.filter(r => {
+    const c = String(r.Color||'').trim();
+    if(colorFilter === 'def')   return DEF_SET.has(c);
+    if(colorFilter === 'fancy') return isFancy(c);
+    return true;
+  });
+
+  // grandTotal = ALL items in this region (full supplier, not just DEF/Fancy)
+  // Used as denominator for alert % threshold
+  let grandTotal = 0;
+  for(const r of baseRows) {
+    const shape = normSupShape(String(r.Shape||'').trim());
+    if(!TARGET_SHAPES.includes(shape)) continue;
+    const carat = parseFloat(r.Carat);
+    const band  = getCtBand(isNaN(carat)?null:carat);
+    if(!band) continue;
+    grandTotal++;
+  }
+
+  // matrix[shape][ctBand] = {sum, count}
+  const matrix = {};
+
+  for(const r of filtered) {
+    const shape = normSupShape(String(r.Shape||'').trim());
+    if(!TARGET_SHAPES.includes(shape)) continue;
+    const carat = parseFloat(r.Carat);
+    const ppc   = parseFloat(r['$/ct.']);
+    const band  = getCtBand(isNaN(carat)?null:carat);
+    if(!band || isNaN(ppc)) continue;
+    if(!matrix[shape]) matrix[shape] = {};
+    if(!matrix[shape][band]) matrix[shape][band] = {sum:0, count:0};
+    matrix[shape][band].sum   += ppc;
+    matrix[shape][band].count += 1;
+  }
+
+  // compute averages
+  const result = {};
+  for(const shape of Object.keys(matrix)) {
+    result[shape] = {};
+    for(const band of Object.keys(matrix[shape])) {
+      const {sum, count} = matrix[shape][band];
+      result[shape][band] = { avg: sum/count, count };
+    }
+  }
+
+  return { result, grandTotal };
+}
+
+function computePriceData(newRows, oldRows, newRowsAll, oldRowsAll) {
+  // newRows    = selected-location filtered rows (for 'hk' key)
+  // newRowsAll = all-location rows (for 'all' key)
+  // Same for old supplier rows
+  const allNew = newRowsAll || newRows;
+  const allOld = oldRowsAll || oldRows || [];
+
+  const regions = {
+    hk:  { new: newRows,  old: oldRows||[] },   // selected locations
+    all: { new: allNew,   old: allOld        },  // all locations
+  };
+
+  const out = {};
+  for(const [reg, {new: nr, old: or}] of Object.entries(regions)) {
+    out[reg] = {};
+    for(const tab of ['def','fancy']) {
+      // Use same scope's full rows as denominator for alert %
+      const nm = buildPriceMatrix(nr, tab, nr);
+      const om = buildPriceMatrix(or, tab, or);
+      out[reg][tab] = { new: nm, old: om };
+    }
+  }
+  return out;
+}
+
+function renderPriceMatrix() {
+  if(!priceData) return;
+  const data = priceData[priceRegion][priceTab];
+  const newM = data.new.result;
+  const oldM = data.old.result;
+  const grandTotal = data.new.grandTotal;
+
+  // Collect shapes and bands that have data
+  const shapesWithData = TARGET_SHAPES.filter(s => newM[s] && Object.keys(newM[s]).length > 0);
+  const bandsWithData  = CT_BANDS.filter(b => shapesWithData.some(s => newM[s] && newM[s][b]));
+
+  if(shapesWithData.length === 0) {
+    document.getElementById('price-matrix').innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">暂无数据</div>';
+    return;
+  }
+
+  // Alert analysis
+  const alertItems = [];
+  let totalLowCount = 0;
+  const lowByShape = {}, lowByBand = {}, lowByColor = {};
+
+  // Count low-price cells and check alert threshold
+  for(const shape of shapesWithData) {
+    for(const band of bandsWithData) {
+      const cell = newM[shape] && newM[shape][band];
+      if(!cell) continue;
+      if(cell.avg < 90) {
+        totalLowCount += cell.count;
+        lowByShape[shape] = (lowByShape[shape]||0) + cell.count;
+        lowByBand[band]   = (lowByBand[band]||0)   + cell.count;
+        const pct = grandTotal > 0 ? cell.count/grandTotal : 0;
+        if(pct >= 0.20) {
+          alertItems.push({shape, band, avg: cell.avg, count: cell.count, pct});
+        }
+      }
+    }
+  }
+
+  // Render alert box
+  const alertBox = document.getElementById('price-alert-box');
+  const alertContent = document.getElementById('price-alert-content');
+  if(alertItems.length > 0) {
+    alertBox.style.display = 'block';
+    const lines = alertItems.map(a =>
+      `• <strong>${a.shape} · ${a.band}ct</strong>：均价 $${a.avg.toFixed(1)}/ct，${a.count}件，占总库存 <strong style="color:var(--red)">${(a.pct*100).toFixed(1)}%</strong>`
+    );
+    // Summary of low-price concentration
+    const topShapes = Object.entries(lowByShape).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,n])=>`${s}(${n}件)`).join('、');
+    const topBands  = Object.entries(lowByBand).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([b,n])=>`${b}ct(${n}件)`).join('、');
+    lines.push(`<br>📊 低价产品集中形状：<strong>${topShapes||'—'}</strong>`);
+    lines.push(`📊 低价产品集中克拉段：<strong>${topBands||'—'}</strong>`);
+    alertContent.innerHTML = lines.join('<br>');
+  } else {
+    alertBox.style.display = 'none';
+  }
+
+  // Build table
+  const hasOld = Object.keys(oldM).length > 0;
+  let html = '<table><thead><tr><th>形状 Shape</th>';
+  for(const band of bandsWithData) {
+    html += `<th>${band}ct</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for(const shape of shapesWithData) {
+    html += `<tr><td class="shape-col">${shape}</td>`;
+    for(const band of bandsWithData) {
+      const cell = newM[shape] && newM[shape][band];
+      if(!cell) { html += `<td class="cell-empty">—</td>`; continue; }
+
+      const isLow = cell.avg < 90;
+      const pctOfTotal = grandTotal > 0 ? cell.count/grandTotal : 0;
+      const isAlert = isLow && pctOfTotal >= 0.20;
+
+      let changeStr = '';
+      if(hasOld && oldM[shape] && oldM[shape][band]) {
+        const diff = cell.avg - oldM[shape][band].avg;  // new - old
+        const arrow = diff > 0.5 ? '↑' : diff < -0.5 ? '↓' : '';
+        const cls   = diff > 0.5 ? 'change-up' : diff < -0.5 ? 'change-down' : 'change-flat';
+        if(arrow) changeStr = ` <span class="${cls}">${arrow}${Math.abs(diff).toFixed(0)}</span>`;
+      }
+
+      const cls = isAlert ? 'cell-warn' : isLow ? 'cell-warn' : '';
+      html += `<td class="${cls}" title="${cell.count}件">$${cell.avg.toFixed(0)}${changeStr}<br><span style="font-size:10px;opacity:.6">${cell.count}件</span></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('price-matrix').innerHTML = html;
+
+  // Price change summary (only if old data exists)
+  const changeLabel = document.getElementById('price-change-label');
+  const changeWrap  = document.getElementById('price-change-wrap');
+  if(hasOld) {
+    changeLabel.style.display = 'block';
+    changeWrap.style.display  = 'block';
+    let changeRows = [];
+    for(const shape of shapesWithData) {
+      for(const band of bandsWithData) {
+        const nc = newM[shape] && newM[shape][band];
+        const oc = oldM[shape] && oldM[shape][band];
+        if(!nc || !oc) continue;
+        const diff = nc.avg - oc.avg;
+        if(Math.abs(diff) > 0.5) changeRows.push({shape, band, old: oc.avg, new: nc.avg, diff});
+      }
+    }
+    changeRows.sort((a,b) => Math.abs(b.diff)-Math.abs(a.diff));
+    if(changeRows.length === 0) {
+      changeWrap.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">价格无明显变化（±$0.5以内）</div>';
+    } else {
+      changeWrap.innerHTML = changeRows.slice(0,20).map(r => {
+        // diff = new - old: positive = price up (red), negative = price down (green)
+        const cls  = r.diff > 0 ? 'change-up' : 'change-down';
+        const sign = r.diff > 0 ? '↑' : '↓';
+        return `<div class="price-change-row">
+          <span>${r.shape} · ${r.band}ct</span>
+          <span>
+            <strong>新 $${r.new.toFixed(0)}</strong>
+            <span style="color:var(--text3);font-size:11px;margin:0 6px">旧 $${r.old.toFixed(0)}</span>
+            <strong class="${cls}">${sign}$${Math.abs(r.diff).toFixed(0)}</strong>
+          </span>
+        </div>`;
+      }).join('');
+    }
+  } else {
+    changeLabel.style.display = 'none';
+    changeWrap.style.display  = 'none';
+  }
 }
 
 // ════════════════════════════════════════════════════════════
