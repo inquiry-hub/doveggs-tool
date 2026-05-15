@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DovEggs · 流程管理</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   CSS 变量 & 重置
+══════════════════════════════════════════════════════════════════ */
+:root {
+  --gold: #C9A84C; --gold-l: #E8C97A; --gold-dim: rgba(201,168,76,.12); --gold-dim2: rgba(201,168,76,.06);
+  --bg: #0A0A0A; --bg2: #141414; --bg3: #1C1C1C; --bg4: #222;
+  --border: #262626; --border2: #303030;
+  --text: #F0EDE8; --muted: #777770; --sub: #444440;
+  --green: #5EA87A; --green-dim: rgba(94,168,122,.12);
+  --blue: #5B8FCC; --blue-dim: rgba(91,143,204,.12);
+  --red: #CC6B5B; --red-dim: rgba(204,107,91,.12);
+  --purple: #B482DC; --purple-dim: rgba(180,130,220,.12);
+  --amber: #DCA85A; --amber-dim: rgba(220,168,90,.12);
+  --cyan: #5AAADC; --cyan-dim: rgba(90,170,220,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;font-size:14px;display:flex;flex-direction:column}
+button{cursor:pointer;border:none;background:none;font-family:inherit;font-size:inherit;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;background:none}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ══════════════════════════════════════════════════════════════════
+   布局
+══════════════════════════════════════════════════════════════════ */
+.top-bar{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);flex-shrink:0}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{font-size:10px;font-weight:700;letter-spacing:.22em;color:var(--gold);opacity:.85;text-transform:uppercase}
+.header-divider{width:1px;height:16px;background:var(--border)}
+.header-title{font-size:16px;font-weight:600;letter-spacing:.03em}
+.header-title span{color:var(--gold-l)}
+.header-right{display:flex;align-items:center;gap:10px}
+
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* sidebar */
+.sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-section{padding:16px 0 4px}
+.sidebar-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);padding:0 18px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;color:var(--muted);font-size:13px;position:relative;transition:all .15s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold-l)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--bg4);color:var(--sub)}
+.nav-item.active .nav-count{background:var(--gold-dim);color:var(--gold)}
+.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.toolbar{display:flex;align-items:center;gap:10px;padding:14px 24px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:340px}
+.search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none;font-size:13px}
+.search-input{width:100%;padding:8px 10px 8px 33px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--gold)}
+.search-input::placeholder{color:var(--sub)}
+.cycle-filters{display:flex;gap:6px;flex-wrap:wrap}
+.cycle-btn{padding:6px 12px;border-radius:7px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;transition:all .15s}
+.cycle-btn:hover{border-color:var(--gold);color:var(--gold)}
+.cycle-btn.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.toolbar-right{margin-left:auto;display:flex;gap:8px}
+
+/* process grid */
+.process-area{flex:1;overflow-y:auto;padding:20px 24px}
+.process-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+
+.process-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.process-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .2s}
+.process-card:hover{border-color:rgba(201,168,76,.35);background:var(--bg3);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.process-card:hover::before,.process-card.selected::before{opacity:1}
+.process-card.selected{border-color:var(--gold);background:var(--bg3)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-icon{font-size:20px;width:40px;height:40px;background:var(--gold-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+.process-card:hover .card-actions{opacity:1}
+.card-act-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg4);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.card-act-btn:hover{border-color:var(--gold);color:var(--gold)}
+.card-act-btn.del:hover{border-color:var(--red);color:var(--red)}
+.card-name{font-size:14px;font-weight:700;line-height:1.35}
+.cat-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.04em;margin-top:5px}
+.cat-ops{background:var(--blue-dim);color:var(--blue)}
+.cat-after{background:var(--green-dim);color:var(--green)}
+.cat-logistics{background:var(--purple-dim);color:var(--purple)}
+.cat-qc{background:var(--amber-dim);color:var(--amber)}
+.cat-pre{background:var(--cyan-dim);color:var(--cyan)}
+.card-people{display:flex;gap:5px;flex-wrap:wrap}
+.person-tag{display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;background:var(--bg4);border:1px solid var(--border2);font-size:11px;color:var(--muted)}
+.person-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.card-foot{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+.cycle-badge{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:4px}
+.cycle-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.6}
+.steps-ct{margin-left:auto;font-size:11px;color:var(--sub)}
+.log-badge{font-size:11px;padding:1px 7px;border-radius:8px;background:var(--red-dim);color:var(--red);font-weight:700}
+
+/* detail panel */
+.detail-panel{width:420px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s}
+.detail-panel.hidden{width:0;border:none}
+
+.detail-header{padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+.detail-header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.detail-title{font-size:17px;font-weight:700;line-height:1.3}
+.icon-btn{padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-size:12px;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+.icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.detail-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.detail-tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{padding:9px 16px;font-size:13px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--red-dim);color:var(--red);font-size:10px;font-weight:700;margin-left:4px}
+
+.detail-body{flex:1;overflow-y:auto;padding:18px 20px}
+.section-hd{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);margin-bottom:12px}
+
+/* steps */
+.steps-list{display:flex;flex-direction:column}
+.step-item{display:flex;gap:12px;padding-bottom:18px}
+.step-item:last-child{padding-bottom:0}
+.step-lw{display:flex;flex-direction:column;align-items:center}
+.step-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step-connector{flex:1;width:1px;background:var(--border);margin:3px 0}
+.step-item:last-child .step-connector{display:none}
+.step-content{flex:1;padding-top:3px}
+.step-title{font-size:13px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.step-person{font-size:12px;color:var(--gold);margin-bottom:5px}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.7}
+.step-edit-btn{opacity:0;transition:opacity .15s;flex-shrink:0}
+.step-item:hover .step-edit-btn{opacity:1}
+
+/* task log */
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.task-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.task-card-title{font-size:13px;font-weight:600;line-height:1.4}
+.task-time{font-size:11px;color:var(--sub);flex-shrink:0}
+.task-card-meta{font-size:11px;color:var(--sub)}
+.task-card-meta strong{color:var(--gold)}
+.task-card-note{font-size:12px;color:var(--muted);line-height:1.6;padding-top:6px;border-top:1px solid var(--border)}
+
+/* share bar */
+.share-bar{padding:10px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.share-url{flex:1;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Buttons ────────────────────────────────── */
+.btn{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid transparent;transition:all .15s}
+.btn-gold{background:var(--gold);color:#0A0A0A;border-color:var(--gold)}
+.btn-gold:hover{background:var(--gold-l)}
+.btn-ghost{background:var(--bg3);border-color:var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:var(--red-dim);border-color:rgba(204,107,91,.3);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:6px}
+
+/* ── User badge ─────────────────────────────── */
+.user-badge{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:16px;background:var(--bg3);border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;transition:border-color .2s}
+.user-badge:hover{border-color:var(--gold);color:var(--text)}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+/* ══════════════════════════════════════════════════════════════════
+   Modal
+══════════════════════════════════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* form */
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-input{padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;outline:none;transition:border-color .2s;width:100%}
+.form-input:focus{border-color:var(--gold)}
+.form-select{padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;outline:none;width:100%;cursor:pointer}
+.form-select:focus{border-color:var(--gold)}
+.form-textarea{padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;outline:none;width:100%;resize:vertical;min-height:80px;line-height:1.6}
+.form-textarea:focus{border-color:var(--gold)}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Setup screen ───────────────────────────── */
+.setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px;text-align:center;gap:20px}
+.setup-icon{font-size:48px}
+.setup-title{font-size:22px;font-weight:700;color:var(--gold-l)}
+.setup-desc{font-size:14px;color:var(--muted);line-height:1.8;max-width:480px}
+.setup-url-input{width:100%;max-width:480px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;outline:none;font-size:13px;text-align:center}
+.setup-url-input:focus{border-color:var(--gold)}
+.setup-steps{text-align:left;max-width:480px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;width:100%}
+.setup-step{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13px;color:var(--muted);line-height:1.6}
+.setup-step-num{width:20px;height:20px;border-radius:50%;background:var(--gold-dim);color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* ── Empty / Loading ────────────────────────── */
+.empty{padding:48px 24px;text-align:center;color:var(--sub)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-text{font-size:13px}
+.spinner{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--muted);font-size:13px;gap:10px}
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Toast ──────────────────────────────────── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;border:1px solid;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:auto}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--green-dim);border-color:rgba(94,168,122,.3);color:var(--green)}
+.toast.error{background:var(--red-dim);border-color:rgba(204,107,91,.3);color:var(--red)}
+.toast.info{background:var(--gold-dim);border-color:rgba(201,168,76,.3);color:var(--gold)}
+
+/* ── Admin modal list ───────────────────────── */
+.admin-user-list{display:flex;flex-direction:column;gap:6px}
+.admin-user-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
+.admin-user-name{font-size:13px;font-weight:600;flex:1}
+.admin-user-role{font-size:11px;padding:2px 8px;border-radius:8px}
+.role-admin{background:var(--gold-dim);color:var(--gold)}
+.role-employee{background:var(--bg4);color:var(--sub)}
+
+/* ── Note cards ──────────────────────────────── */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.note-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.note-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .2s}
+.note-card:hover{border-color:rgba(201,168,76,.35);background:var(--bg3);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.note-card:hover::before,.note-card.selected::before{opacity:1}
+.note-card.selected{border-color:var(--gold);background:var(--bg3)}
+.note-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.note-card-cat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--purple-dim);color:var(--purple);display:inline-block;flex-shrink:0}
+.note-card-title{font-size:14px;font-weight:700;line-height:1.4}
+.note-card-preview{font-size:12px;color:var(--muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+.note-card-foot{display:flex;align-items:center;padding-top:8px;border-top:1px solid var(--border);margin-top:auto}
+.note-date{font-size:11px;color:var(--sub)}
+.note-content{font-size:13px;color:var(--muted);line-height:1.9;white-space:pre-wrap;word-break:break-word}
+.note-detail-actions{display:flex;gap:8px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.note-area-header{display:flex;align-items:center;gap:10px;padding:12px 24px 0;flex-shrink:0}
+.note-area-title{font-size:15px;font-weight:700}
+
+/* print */
+@media print {
+  .sidebar,.toolbar,.header,.detail-panel,.share-bar,.card-actions,.step-edit-btn{display:none!important}
+  .process-area{padding:0}
+  .process-card{break-inside:avoid;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HTML 结构
+═══════════════════════════════════════════════════════════ -->
+<div class="top-bar"></div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">DovEggs</div>
+    <div class="header-divider"></div>
+    <div class="header-title">内部<span>流程管理</span></div>
+  </div>
+  <div class="header-right">
+    <button class="user-badge" id="userBadge" onclick="showUserPicker()">
+      <div class="user-dot"></div>
+      <span id="currentUserName">选择身份</span>
+      <span style="color:var(--sub)">▾</span>
+    </button>
+    <button class="btn btn-gold" onclick="openCreateProcess()">＋ 新建流程</button>
+    <button class="icon-btn" onclick="showAdmin()" title="管理员">🔑</button>
+  </div>
+</div>
+
+<div class="layout" id="mainLayout">
+
+  <!-- 侧边栏 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">全部</div>
+      <div class="nav-item active" data-filter="all" onclick="setFilter('category','all',this)">
+        <span>⚙️</span> 全部流程 <span class="nav-count" id="countAll">-</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">分类</div>
+      <div class="nav-item" data-filter="运营" onclick="setFilter('category','运营',this)"><span>🛍️</span>运营<span class="nav-count" id="count-运营">-</span></div>
+      <div class="nav-item" data-filter="售前客服" onclick="setFilter('category','售前客服',this)"><span>💬</span>售前客服<span class="nav-count" id="count-售前客服">-</span></div>
+      <div class="nav-item" data-filter="售后客服" onclick="setFilter('category','售后客服',this)"><span>🔄</span>售后客服<span class="nav-count" id="count-售后客服">-</span></div>
+      <div class="nav-item" data-filter="物流" onclick="setFilter('category','物流',this)"><span>🚚</span>物流<span class="nav-count" id="count-物流">-</span></div>
+      <div class="nav-item" data-filter="质检" onclick="setFilter('category','质检',this)"><span>🔍</span>质检<span class="nav-count" id="count-质检">-</span></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">负责人</div>
+      <div id="personNav"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">工作笔记</div>
+      <div id="noteNav"></div>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="window.location.href='../'">← 返回工具中心</button>
+    </div>
+  </div>
+
+  <!-- 主区域 -->
+  <div class="main">
+    <!-- 流程工具栏 -->
+    <div class="toolbar" id="processToolbar">
+      <div class="search-wrap">
+        <span class="search-ico">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="搜索流程名称、步骤、负责人…" oninput="onSearch()" />
+      </div>
+      <div class="cycle-filters">
+        <button class="cycle-btn active" data-cycle="all" onclick="setCycle('all',this)">全部</button>
+        <button class="cycle-btn" data-cycle="每日" onclick="setCycle('每日',this)">每日</button>
+        <button class="cycle-btn" data-cycle="每周" onclick="setCycle('每周',this)">每周</button>
+        <button class="cycle-btn" data-cycle="每月" onclick="setCycle('每月',this)">每月</button>
+        <button class="cycle-btn" data-cycle="不定期" onclick="setCycle('不定期',this)">不定期</button>
+      </div>
+      <div class="toolbar-right">
+        <button class="icon-btn" onclick="window.print()" title="打印">🖨️ 打印</button>
+      </div>
+    </div>
+    <!-- 笔记工具栏 -->
+    <div class="toolbar" id="notesToolbar" style="display:none">
+      <button class="btn btn-ghost btn-sm" onclick="switchToProcessMode()">← 返回流程</button>
+      <div style="font-size:14px;font-weight:600;margin-left:6px" id="notesToolbarTitle">📓 工作笔记</div>
+      <div class="toolbar-right">
+        <button class="btn btn-gold btn-sm" onclick="openCreateNote()">＋ 新建笔记</button>
+      </div>
+    </div>
+
+    <!-- 流程卡片区 -->
+    <div class="process-area" id="processArea">
+      <div class="spinner"><div class="spin"></div> 加载中…</div>
+    </div>
+  </div>
+
+  <!-- 详情面板 -->
+  <div class="detail-panel hidden" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-header-top">
+        <div class="detail-title" id="detailTitle"></div>
+        <button class="icon-btn" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-meta" id="detailMeta"></div>
+    </div>
+    <div class="detail-tabs" id="detailTabs">
+      <div class="tab active" id="tabSteps" onclick="switchTab('steps')">流程步骤</div>
+      <div class="tab" id="tabLogs" onclick="switchTab('logs')">任务记录 <span class="tab-badge" id="logBadge" style="display:none"></span></div>
+      <div class="tab" id="tabAdd" onclick="switchTab('add')">＋ 新增任务</div>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+    <div class="share-bar" id="shareBar">
+      <div class="share-url" id="shareUrl"></div>
+      <button class="icon-btn" onclick="copyShare()">📋 复制</button>
+      <button class="icon-btn" onclick="downloadProcess()">⬇️ 下载</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Setup 提示（初始状态） -->
+<div class="modal-overlay hidden" id="setupOverlay">
+  <div class="setup-screen" style="max-width:600px">
+    <div class="setup-icon">⚙️</div>
+    <div class="setup-title">首次使用：配置 Google Apps Script</div>
+    <div class="setup-desc">请先完成以下步骤，然后将部署 URL 粘贴到下方</div>
+    <div class="setup-steps">
+      <div class="setup-step"><div class="setup-step-num">1</div>打开 <a href="https://script.google.com" target="_blank" style="color:var(--gold)">script.google.com</a> 新建项目，粘贴 Code.gs 中的代码</div>
+      <div class="setup-step"><div class="setup-step-num">2</div>点击「部署 → 新部署 → 网络应用」，执行身份选「我自己」，访问权限选「所有人」</div>
+      <div class="setup-step"><div class="setup-step-num">3</div>在 Apps Script 中手动运行一次 <code style="color:var(--gold)">initDatabase()</code> 函数</div>
+      <div class="setup-step"><div class="setup-step-num">4</div>复制部署 URL 粘贴到下方，点击保存</div>
+    </div>
+    <input class="setup-url-input" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" />
+    <button class="btn btn-gold" onclick="saveGasUrl()" style="padding:10px 32px;font-size:14px">保存并连接</button>
+  </div>
+</div>
+
+<!-- 用户选择 Modal -->
+<div class="modal-overlay hidden" id="userModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">选择你的身份</div>
+      <button class="modal-close" onclick="closeModal('userModal')">✕</button>
+    </div>
+    <div class="modal-body" id="userPickerList"></div>
+  </div>
+</div>
+
+<!-- 新建/编辑流程 Modal -->
+<div class="modal-overlay hidden" id="processModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="processModalTitle">新建流程</div>
+      <button class="modal-close" onclick="closeModal('processModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><div class="form-label">流程名称 *</div><input class="form-input" id="pm_name" placeholder="如：产品上新流程"></div>
+      <div class="form-row2">
+        <div class="form-group"><div class="form-label">分类 *</div>
+          <select class="form-select" id="pm_category">
+            <option value="运营">运营</option>
+            <option value="售前客服">售前客服</option>
+            <option value="售后客服">售后客服</option>
+            <option value="物流">物流</option>
+            <option value="质检">质检</option>
+          </select>
+        </div>
+        <div class="form-group"><div class="form-label">执行周期 *</div>
+          <select class="form-select" id="pm_cycle">
+            <option value="每日">每日</option>
+            <option value="每周">每周</option>
+            <option value="每月">每月</option>
+            <option value="每2-3天">每2-3天</option>
+            <option value="不定期">不定期</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><div class="form-label">流程说明</div><textarea class="form-textarea" id="pm_desc" placeholder="简要描述此流程的目的和范围"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('processModal')">取消</button>
+      <button class="btn btn-gold" onclick="submitProcess()">保存流程</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建/编辑步骤 Modal -->
+<div class="modal-overlay hidden" id="stepModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="stepModalTitle">新增步骤</div>
+      <button class="modal-close" onclick="closeModal('stepModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row2">
+        <div class="form-group"><div class="form-label">步骤序号</div><input class="form-input" id="sm_order" type="number" min="1" placeholder="1"></div>
+        <div class="form-group"><div class="form-label">负责人</div><input class="form-input" id="sm_responsible" placeholder="如：Pepper / Eva"></div>
+      </div>
+      <div class="form-group"><div class="form-label">步骤名称 *</div><input class="form-input" id="sm_title" placeholder="简明描述此步骤做什么"></div>
+      <div class="form-group"><div class="form-label">操作说明</div><textarea class="form-textarea" id="sm_desc" placeholder="详细说明操作方法、注意事项…" style="min-height:100px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('stepModal')">取消</button>
+      <button class="btn btn-gold" onclick="submitStep()">保存步骤</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建/编辑工作笔记 Modal -->
+<div class="modal-overlay hidden" id="noteModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title" id="noteModalTitle">新建笔记</div>
+      <button class="modal-close" onclick="closeModal('noteModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><div class="form-label">标题 *</div><input class="form-input" id="nm_title" placeholder="笔记标题"></div>
+      <div class="form-group"><div class="form-label">分类</div><input class="form-input" id="nm_category" placeholder="如：合作技巧、售后处理、产品知识…"></div>
+      <div class="form-group"><div class="form-label">内容</div><textarea class="form-textarea" id="nm_content" placeholder="笔记正文，换行用回车…" style="min-height:200px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('noteModal')">取消</button>
+      <button class="btn btn-gold" onclick="submitNote()">保存笔记</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增任务 Modal（在 detail panel 内 tab 切换，不用 modal） -->
+
+<!-- 管理员 Modal -->
+<div class="modal-overlay hidden" id="adminModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">管理员面板</div>
+      <button class="modal-close" onclick="closeModal('adminModal')">✕</button>
+    </div>
+    <div class="modal-body" id="adminBody">
+      <div class="form-group"><div class="form-label">管理员密码</div><input class="form-input" id="adminPwInput" type="password" placeholder="输入管理员密码" onkeydown="if(event.key==='Enter')verifyAdmin()"></div>
+      <button class="btn btn-gold" onclick="verifyAdmin()" style="width:100%">验证</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JavaScript
+═══════════════════════════════════════════════════════════ -->
+<script>
+// ── 配置（部署后填入 GAS URL）────────────────────────────────────
+let GAS_URL = localStorage.getItem('doveggs_gas_url') || '';
+
+// ── 状态 ─────────────────────────────────────────────────────────
+const state = {
+  processes: [],
+  users: [],
+  filter: { category: 'all', person: 'all', cycle: 'all', q: '' },
+  selectedId: null,
+  currentProcess: null,  // process + steps
+  taskLogs: [],
+  activeTab: 'steps',
+  editingProcessId: null,
+  editingStepId: null,
+  adminVerified: false,
+  // 工作笔记
+  mode: 'processes',     // 'processes' | 'notes'
+  noteAuthor: null,
+  notes: [],
+  selectedNote: null,
+  editingNoteId: null
+};
+
+// ── 初始化 ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // URL 参数直接打开某流程
+  const urlId = new URLSearchParams(location.search).get('id');
+
+  if (!GAS_URL) {
+    showSetup();
+    return;
+  }
+
+  // 恢复用户
+  const saved = localStorage.getItem('doveggs_user');
+  if (saved) {
+    const u = JSON.parse(saved);
+    document.getElementById('currentUserName').textContent = u.name;
+  }
+
+  await loadAll();
+  if (urlId) openDetail(urlId);
+});
+
+function showSetup() {
+  document.getElementById('setupOverlay').classList.remove('hidden');
+  document.getElementById('mainLayout').style.display = 'none';
+  document.querySelector('.header').style.display = 'none';
+}
+
+function saveGasUrl() {
+  const url = document.getElementById('gasUrlInput').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    toast('请输入正确的 Google Apps Script URL', 'error'); return;
+  }
+  GAS_URL = url;
+  localStorage.setItem('doveggs_gas_url', url);
+  document.getElementById('setupOverlay').classList.add('hidden');
+  document.getElementById('mainLayout').style.display = '';
+  document.querySelector('.header').style.display = '';
+  loadAll();
+}
+
+// ── API 调用 ──────────────────────────────────────────────────────
+async function api(params) {
+  try {
+    const isWrite = ['createProcess','updateProcess','deleteProcess',
+                     'createStep','updateStep','deleteStep',
+                     'addTaskLog','createUser','updateUser','deleteUser',
+                     'createWorkNote','updateWorkNote','deleteWorkNote'].includes(params.action);
+
+    let res;
+    if (isWrite) {
+      res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: new URLSearchParams(params),
+        redirect: 'follow'
+      });
+    } else {
+      res = await fetch(GAS_URL + '?' + new URLSearchParams(params), { redirect: 'follow' });
+    }
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || '操作失败');
+    return json.data;
+  } catch (e) {
+    toast('网络错误：' + e.message, 'error');
+    throw e;
+  }
+}
+
+async function loadAll() {
+  try {
+    const [procs, users] = await Promise.all([
+      api({ action: 'getProcesses' }),
+      api({ action: 'getUsers' })
+    ]);
+    state.processes = procs || [];
+    state.users = users || [];
+    renderSidebar();
+    renderCards();
+  } catch (e) {
+    document.getElementById('processArea').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">连接失败，请检查 GAS_URL 配置</div></div>`;
+  }
+}
+
+// ── 渲染侧边栏 ────────────────────────────────────────────────────
+function renderSidebar() {
+  const cats = ['运营','售前客服','售后客服','物流','质检'];
+  cats.forEach(c => {
+    const el = document.getElementById('count-' + c);
+    if (el) el.textContent = state.processes.filter(p => p.category === c).length;
+  });
+  document.getElementById('countAll').textContent = state.processes.length;
+
+  // 负责人列表（从数据库取）
+  const nav = document.getElementById('personNav');
+  nav.innerHTML = state.users.map(u =>
+    `<div class="nav-item" data-person="${u.name}" onclick="setFilter('person','${u.name}',this)">
+      <span>👤</span>${u.name}
+    </div>`
+  ).join('');
+
+  // 工作笔记导航（排除工厂人员）
+  const noteNav = document.getElementById('noteNav');
+  const noteEmployees = state.users.filter(u => !['阿连','阿琴'].includes(u.name));
+  noteNav.innerHTML = noteEmployees.map(u =>
+    `<div class="nav-item" data-note="${u.name}" onclick="setNoteFilter('${u.name}',this)">
+      <span>📓</span>${u.name}
+    </div>`
+  ).join('');
+}
+
+// ── 渲染流程卡片 ──────────────────────────────────────────────────
+function renderCards() {
+  const { category, person, cycle, q } = state.filter;
+  let list = [...state.processes];
+
+  if (category !== 'all') list = list.filter(p => p.category === category);
+  if (cycle !== 'all') list = list.filter(p => p.cycle === cycle);
+  if (q) {
+    const lq = q.toLowerCase();
+    list = list.filter(p =>
+      p.name.toLowerCase().includes(lq) ||
+      (p.description || '').toLowerCase().includes(lq) ||
+      p.category.toLowerCase().includes(lq)
+    );
+  }
+
+  const area = document.getElementById('processArea');
+  if (list.length === 0) {
+    area.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">没有找到匹配的流程</div></div>`;
+    return;
+  }
+
+  area.innerHTML = `<div class="process-grid">${list.map(p => cardHTML(p)).join('')}</div>`;
+}
+
+function cardHTML(p) {
+  const catClass = { '运营':'cat-ops','售后客服':'cat-after','物流':'cat-logistics','质检':'cat-qc','售前客服':'cat-pre' }[p.category] || 'cat-ops';
+  const icon = { '运营':'🛍️','售后客服':'🔄','物流':'🚚','质检':'🔍','售前客服':'💬' }[p.category] || '⚙️';
+  const selected = state.selectedId === p.id ? ' selected' : '';
+
+  // 负责人（从当前已加载的步骤中推断，此处用占位符）
+  const peoplePlaceholder = `<div class="person-tag"><div class="person-dot"></div>${p.description ? '查看步骤' : '待设置'}</div>`;
+
+  return `<div class="process-card${selected}" onclick="openDetail('${p.id}')">
+    <div class="card-top">
+      <div class="card-icon">${icon}</div>
+      <div class="card-actions">
+        <button class="card-act-btn" onclick="event.stopPropagation();editProcess('${p.id}')" title="编辑">✏️</button>
+        <button class="card-act-btn del" onclick="event.stopPropagation();confirmDeleteProcess('${p.id}','${p.name}')" title="删除">🗑</button>
+      </div>
+    </div>
+    <div>
+      <div class="card-name">${p.name}</div>
+      <span class="cat-badge ${catClass}">${p.category}</span>
+    </div>
+    <div class="card-foot">
+      <div class="cycle-badge"><div class="cycle-dot"></div>${p.cycle}</div>
+    </div>
+  </div>`;
+}
+
+// ── 详情面板 ──────────────────────────────────────────────────────
+async function openDetail(id) {
+  state.selectedId = id;
+  state.selectedNote = null;
+  state.activeTab = 'steps';
+  renderCards();
+
+  // 确保显示流程专属 UI
+  document.getElementById('detailTabs').style.display = '';
+  document.getElementById('shareBar').style.display = '';
+
+  const panel = document.getElementById('detailPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('detailBody').innerHTML = '<div class="spinner"><div class="spin"></div>加载中…</div>';
+
+  try {
+    const [proc, logs] = await Promise.all([
+      api({ action: 'getProcess', id }),
+      api({ action: 'getTaskLogs', processId: id })
+    ]);
+    state.currentProcess = proc;
+    state.taskLogs = logs || [];
+    renderDetailHeader();
+    renderDetailBody();
+    updateShareUrl();
+    // 更新 URL
+    const url = new URL(location.href);
+    url.searchParams.set('id', id);
+    history.replaceState({}, '', url);
+  } catch (e) {
+    document.getElementById('detailBody').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">加载失败</div></div>';
+  }
+}
+
+function closeDetail() {
+  if (state.mode === 'notes') {
+    state.selectedNote = null;
+    document.getElementById('detailPanel').classList.add('hidden');
+    renderNotes();
+    return;
+  }
+  state.selectedId = null;
+  document.getElementById('detailPanel').classList.add('hidden');
+  history.replaceState({}, '', location.pathname);
+  renderCards();
+}
+
+function renderDetailHeader() {
+  const p = state.currentProcess;
+  document.getElementById('detailTitle').textContent = p.name;
+  const catClass = { '运营':'cat-ops','售后客服':'cat-after','物流':'cat-logistics','质检':'cat-qc','售前客服':'cat-pre' }[p.category] || 'cat-ops';
+  const updated = p.updated_at ? p.updated_at.slice(0,10) : '';
+  document.getElementById('detailMeta').innerHTML =
+    `<span class="cat-badge ${catClass}">${p.category}</span>
+     <div class="cycle-badge"><div class="cycle-dot"></div>${p.cycle}</div>
+     ${updated ? `<div style="font-size:11px;color:var(--sub)">更新 ${updated}</div>` : ''}`;
+
+  // log badge
+  const badge = document.getElementById('logBadge');
+  if (state.taskLogs.length > 0) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = state.taskLogs.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  ['steps','logs','add'].forEach(t => {
+    document.getElementById('tab' + cap(t)).classList.toggle('active', t === tab);
+  });
+  renderDetailBody();
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function renderDetailBody() {
+  const body = document.getElementById('detailBody');
+  if (state.activeTab === 'steps') body.innerHTML = renderSteps();
+  else if (state.activeTab === 'logs') body.innerHTML = renderLogs();
+  else body.innerHTML = renderAddTask();
+}
+
+function renderSteps() {
+  const steps = (state.currentProcess.steps || []);
+  const addBtn = `<div style="margin-top:16px"><button class="btn btn-ghost btn-sm" onclick="openCreateStep()">＋ 新增步骤</button></div>`;
+
+  if (steps.length === 0) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">暂无步骤，点击下方新增</div></div>${addBtn}`;
+
+  return `<div class="section-hd">执行步骤</div>
+    <div class="steps-list">
+      ${steps.map((s,i) => `
+        <div class="step-item">
+          <div class="step-lw">
+            <div class="step-num">${i+1}</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">
+              <span>${s.title}</span>
+              <div class="step-edit-btn">
+                <button class="card-act-btn btn-sm" onclick="editStep('${s.id}')" title="编辑步骤">✏️</button>
+                <button class="card-act-btn del btn-sm" onclick="confirmDeleteStep('${s.id}')" title="删除步骤">🗑</button>
+              </div>
+            </div>
+            ${s.responsible ? `<div class="step-person">👤 ${s.responsible}</div>` : ''}
+            ${s.description ? `<div class="step-desc">${s.description}</div>` : ''}
+          </div>
+        </div>`).join('')}
+    </div>
+    ${addBtn}`;
+}
+
+function renderLogs() {
+  if (state.taskLogs.length === 0) {
+    return `<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">暂无任务记录<br>点击「新增任务」tab 添加</div></div>`;
+  }
+  return `<div class="section-hd">任务记录（共 ${state.taskLogs.length} 条）</div>
+    <div class="task-list">
+      ${state.taskLogs.map(l => `
+        <div class="task-card">
+          <div class="task-card-top">
+            <div class="task-card-title">${l.task_title}</div>
+            <div class="task-time">${formatTime(l.created_at)}</div>
+          </div>
+          <div class="task-card-meta">分配给 <strong>${l.assigned_to || '—'}</strong> · 创建：${l.created_by || '—'}</div>
+          ${l.notes ? `<div class="task-card-note">${l.notes}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderAddTask() {
+  const users = state.users.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+  const currentUser = JSON.parse(localStorage.getItem('doveggs_user') || '{}').name || '';
+  return `<div class="section-hd">新增执行任务</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <div class="form-label">任务内容 *</div>
+        <input class="form-input" id="tl_title" placeholder="需要做什么…">
+      </div>
+      <div class="form-row2">
+        <div class="form-group">
+          <div class="form-label">分配给</div>
+          <select class="form-select" id="tl_assigned">
+            <option value="">选择负责人</option>${users}
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">创建人</div>
+          <input class="form-input" id="tl_creator" value="${currentUser}" placeholder="你的名字">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">备注</div>
+        <textarea class="form-textarea" id="tl_notes" placeholder="补充说明、特别注意事项…"></textarea>
+      </div>
+      <button class="btn btn-gold" onclick="submitTaskLog()" style="width:100%">提交任务</button>
+    </div>`;
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 86400) {
+      return '今天 ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    }
+    if (diff < 172800) return '昨天 ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+  } catch { return iso.slice(0,10); }
+}
+
+// ── 分享 & 下载 ───────────────────────────────────────────────────
+function updateShareUrl() {
+  const url = location.origin + location.pathname + '?id=' + state.selectedId;
+  document.getElementById('shareUrl').textContent = url;
+}
+
+function copyShare() {
+  const url = document.getElementById('shareUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('链接已复制', 'success')).catch(() => {
+    prompt('请手动复制此链接：', url);
+  });
+}
+
+function downloadProcess() {
+  const p = state.currentProcess;
+  if (!p) return;
+  const steps = (p.steps || []).map((s,i) =>
+    `步骤 ${i+1}：${s.title}\n负责人：${s.responsible || '—'}\n${s.description || ''}`
+  ).join('\n\n');
+  const logs = state.taskLogs.slice(0,10).map(l =>
+    `[${formatTime(l.created_at)}] ${l.task_title} | 分配给：${l.assigned_to} | 创建：${l.created_by}\n${l.notes || ''}`
+  ).join('\n---\n');
+  const content = `${p.name}\n${'═'.repeat(40)}\n分类：${p.category} | 周期：${p.cycle}\n\n${p.description || ''}\n\n${'─'.repeat(40)}\n执行步骤\n${'─'.repeat(40)}\n${steps}\n\n${'─'.repeat(40)}\n最近任务记录\n${'─'.repeat(40)}\n${logs || '暂无记录'}\n\nDovEggs 流程管理系统 · ${new Date().toLocaleDateString('zh-CN')}`;
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${p.name}_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
+
+// ── 过滤器 ────────────────────────────────────────────────────────
+function setFilter(type, value, el) {
+  if (type === 'category') {
+    state.filter.category = value;
+    state.filter.person = 'all';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  } else {
+    state.filter.person = value;
+    state.filter.category = 'all';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  }
+  if (el) el.classList.add('active');
+  renderCards();
+}
+
+function setCycle(cycle, el) {
+  state.filter.cycle = cycle;
+  document.querySelectorAll('.cycle-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderCards();
+}
+
+let searchTimer;
+function onSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    state.filter.q = document.getElementById('searchInput').value.trim();
+    renderCards();
+  }, 250);
+}
+
+// ── 新建/编辑流程 ─────────────────────────────────────────────────
+function openCreateProcess() {
+  state.editingProcessId = null;
+  document.getElementById('processModalTitle').textContent = '新建流程';
+  ['pm_name','pm_desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pm_category').value = '运营';
+  document.getElementById('pm_cycle').value = '每日';
+  openModal('processModal');
+}
+
+async function editProcess(id) {
+  const p = state.processes.find(p => p.id === id);
+  if (!p) return;
+  state.editingProcessId = id;
+  document.getElementById('processModalTitle').textContent = '编辑流程';
+  document.getElementById('pm_name').value = p.name;
+  document.getElementById('pm_category').value = p.category;
+  document.getElementById('pm_cycle').value = p.cycle;
+  document.getElementById('pm_desc').value = p.description || '';
+  openModal('processModal');
+}
+
+async function submitProcess() {
+  const name = document.getElementById('pm_name').value.trim();
+  if (!name) { toast('流程名称不能为空', 'error'); return; }
+  const params = {
+    name,
+    category: document.getElementById('pm_category').value,
+    cycle: document.getElementById('pm_cycle').value,
+    description: document.getElementById('pm_desc').value.trim()
+  };
+  try {
+    if (state.editingProcessId) {
+      await api({ action: 'updateProcess', id: state.editingProcessId, ...params });
+      toast('流程已更新', 'success');
+    } else {
+      await api({ action: 'createProcess', ...params });
+      toast('流程已创建', 'success');
+    }
+    closeModal('processModal');
+    await loadAll();
+  } catch (e) {}
+}
+
+async function confirmDeleteProcess(id, name) {
+  if (!confirm(`确定要删除「${name}」吗？\n此操作会同时删除所有步骤，不可恢复。`)) return;
+  try {
+    await api({ action: 'deleteProcess', id });
+    toast('流程已删除', 'info');
+    if (state.selectedId === id) closeDetail();
+    await loadAll();
+  } catch (e) {}
+}
+
+// ── 新建/编辑步骤 ─────────────────────────────────────────────────
+function openCreateStep() {
+  state.editingStepId = null;
+  document.getElementById('stepModalTitle').textContent = '新增步骤';
+  ['sm_title','sm_responsible','sm_desc'].forEach(id => document.getElementById(id).value = '');
+  const nextOrder = (state.currentProcess.steps || []).length + 1;
+  document.getElementById('sm_order').value = nextOrder;
+  openModal('stepModal');
+}
+
+async function editStep(id) {
+  const step = (state.currentProcess.steps || []).find(s => s.id === id);
+  if (!step) return;
+  state.editingStepId = id;
+  document.getElementById('stepModalTitle').textContent = '编辑步骤';
+  document.getElementById('sm_order').value = step.step_order;
+  document.getElementById('sm_title').value = step.title;
+  document.getElementById('sm_responsible').value = step.responsible || '';
+  document.getElementById('sm_desc').value = step.description || '';
+  openModal('stepModal');
+}
+
+async function submitStep() {
+  const title = document.getElementById('sm_title').value.trim();
+  if (!title) { toast('步骤名称不能为空', 'error'); return; }
+  const params = {
+    stepOrder: document.getElementById('sm_order').value || 1,
+    title,
+    responsible: document.getElementById('sm_responsible').value.trim(),
+    description: document.getElementById('sm_desc').value.trim()
+  };
+  try {
+    if (state.editingStepId) {
+      await api({ action: 'updateStep', id: state.editingStepId, ...params });
+      toast('步骤已更新', 'success');
+    } else {
+      await api({ action: 'createStep', processId: state.selectedId, ...params });
+      toast('步骤已新增', 'success');
+    }
+    closeModal('stepModal');
+    // 刷新详情
+    const proc = await api({ action: 'getProcess', id: state.selectedId });
+    state.currentProcess = proc;
+    switchTab('steps');
+  } catch (e) {}
+}
+
+async function confirmDeleteStep(id) {
+  if (!confirm('确定要删除此步骤吗？')) return;
+  try {
+    await api({ action: 'deleteStep', id });
+    toast('步骤已删除', 'info');
+    const proc = await api({ action: 'getProcess', id: state.selectedId });
+    state.currentProcess = proc;
+    renderDetailBody();
+  } catch (e) {}
+}
+
+// ── 新增任务记录 ──────────────────────────────────────────────────
+async function submitTaskLog() {
+  const title = document.getElementById('tl_title')?.value.trim();
+  if (!title) { toast('任务内容不能为空', 'error'); return; }
+  const params = {
+    processId: state.selectedId,
+    taskTitle: title,
+    assignedTo: document.getElementById('tl_assigned')?.value || '',
+    createdBy: document.getElementById('tl_creator')?.value.trim() || '—',
+    notes: document.getElementById('tl_notes')?.value.trim() || ''
+  };
+  try {
+    await api({ action: 'addTaskLog', ...params });
+    toast('任务已提交', 'success');
+    state.taskLogs = await api({ action: 'getTaskLogs', processId: state.selectedId });
+    renderDetailHeader();
+    switchTab('logs');
+  } catch (e) {}
+}
+
+// ── 用户选择 ──────────────────────────────────────────────────────
+function showUserPicker() {
+  const list = document.getElementById('userPickerList');
+  list.innerHTML = state.users.map(u => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s"
+         onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"
+         onclick="selectUser('${u.id}','${u.name}','${u.role}')">
+      <div style="font-size:14px;font-weight:600;flex:1">${u.name}</div>
+      <div class="admin-user-role ${u.role === 'admin' ? 'role-admin' : 'role-employee'}">${u.role === 'admin' ? '管理员' : '员工'}</div>
+    </div>`).join('');
+  openModal('userModal');
+}
+
+function selectUser(id, name, role) {
+  localStorage.setItem('doveggs_user', JSON.stringify({id, name, role}));
+  document.getElementById('currentUserName').textContent = name;
+  closeModal('userModal');
+  toast(`已切换为 ${name}`, 'info');
+}
+
+// ── 管理员面板 ────────────────────────────────────────────────────
+function showAdmin() {
+  if (state.adminVerified) {
+    renderAdminPanel();
+  } else {
+    document.getElementById('adminBody').innerHTML = `
+      <div class="form-group"><div class="form-label">管理员密码</div>
+        <input class="form-input" id="adminPwInput" type="password" placeholder="输入管理员密码" onkeydown="if(event.key==='Enter')verifyAdmin()">
+      </div>
+      <button class="btn btn-gold" onclick="verifyAdmin()" style="width:100%">验证</button>`;
+  }
+  openModal('adminModal');
+}
+
+async function verifyAdmin() {
+  const pw = document.getElementById('adminPwInput')?.value;
+  // 在 GAS 侧验证：尝试调用 getUsers（只需要 token 参数）
+  try {
+    await api({ action: 'getUsers', adminToken: pw });
+    state.adminVerified = true;
+    state.adminToken = pw;
+    renderAdminPanel();
+  } catch (e) {
+    toast('密码错误', 'error');
+  }
+}
+
+function renderAdminPanel() {
+  const body = document.getElementById('adminBody');
+  body.innerHTML = `
+    <div class="section-hd">成员管理</div>
+    <div class="admin-user-list">
+      ${state.users.map(u => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${u.name}</div>
+          <div class="admin-user-role ${u.role==='admin'?'role-admin':'role-employee'}">${u.role==='admin'?'管理员':'员工'}</div>
+          <button class="icon-btn btn-sm" onclick="promptRenameUser('${u.id}','${u.name}')">改名</button>
+          <button class="icon-btn btn-sm danger" onclick="confirmDeleteUser('${u.id}','${u.name}')">删除</button>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <input class="form-input" id="newUserName" placeholder="新成员姓名" style="flex:1">
+      <select class="form-select" id="newUserRole" style="width:auto">
+        <option value="employee">员工</option>
+        <option value="admin">管理员</option>
+      </select>
+      <button class="btn btn-gold btn-sm" onclick="addUser()">添加</button>
+    </div>`;
+}
+
+async function promptRenameUser(id, oldName) {
+  const name = prompt('新名字：', oldName);
+  if (!name || name === oldName) return;
+  try {
+    await api({ action: 'updateUser', id, name, adminToken: state.adminToken });
+    toast(`已将 ${oldName} 改为 ${name}`, 'success');
+    state.users = await api({ action: 'getUsers' });
+    renderAdminPanel();
+    renderSidebar();
+  } catch (e) {}
+}
+
+async function confirmDeleteUser(id, name) {
+  if (!confirm(`确定要删除成员「${name}」吗？`)) return;
+  try {
+    await api({ action: 'deleteUser', id, adminToken: state.adminToken });
+    toast(`${name} 已删除`, 'info');
+    state.users = await api({ action: 'getUsers' });
+    renderAdminPanel();
+    renderSidebar();
+  } catch (e) {}
+}
+
+async function addUser() {
+  const name = document.getElementById('newUserName').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  if (!name) { toast('请输入姓名', 'error'); return; }
+  try {
+    await api({ action: 'createUser', name, role, adminToken: state.adminToken });
+    toast(`${name} 已添加`, 'success');
+    state.users = await api({ action: 'getUsers' });
+    renderAdminPanel();
+    renderSidebar();
+  } catch (e) {}
+}
+
+// ── Modal 工具 ────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// 点击遮罩关闭
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay && overlay.id !== 'setupOverlay') {
+      overlay.classList.add('hidden');
+    }
+  });
+});
+
+// ── Toast 通知 ────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const icon = { success:'✅', error:'❌', info:'ℹ️' }[type] || 'ℹ️';
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.classList.add('show'), 10);
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+// ── 工作笔记 ──────────────────────────────────────────────────────
+
+function setNoteFilter(person, el) {
+  state.mode = 'notes';
+  state.noteAuthor = person;
+  state.selectedNote = null;
+  state.selectedId = null;
+  // 关闭详情面板
+  document.getElementById('detailPanel').classList.add('hidden');
+  // 切换工具栏
+  document.getElementById('processToolbar').style.display = 'none';
+  document.getElementById('notesToolbar').style.display = '';
+  document.getElementById('notesToolbarTitle').textContent = `📓 ${person} 的工作笔记`;
+  // 激活侧边栏项
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadNotes(person);
+}
+
+async function loadNotes(author) {
+  document.getElementById('processArea').innerHTML = '<div class="spinner"><div class="spin"></div>加载中…</div>';
+  try {
+    const notes = await api({ action: 'getWorkNotes', author });
+    state.notes = notes || [];
+    renderNotes();
+  } catch (e) {
+    document.getElementById('processArea').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">加载失败</div></div>`;
+  }
+}
+
+function renderNotes() {
+  const area = document.getElementById('processArea');
+  if (state.notes.length === 0) {
+    area.innerHTML = `<div class="empty"><div class="empty-icon">📓</div><div class="empty-text">暂无笔记，点击右上角「新建笔记」添加</div></div>`;
+    return;
+  }
+  area.innerHTML = `<div class="notes-grid" style="padding:20px 24px">${state.notes.map(n => renderNoteCard(n)).join('')}</div>`;
+}
+
+function renderNoteCard(n) {
+  const selected = state.selectedNote?.id === n.id ? ' selected' : '';
+  const preview = escHtml((n.content || '').slice(0, 120));
+  const date = n.updated_at ? n.updated_at.slice(0,10) : '';
+  return `<div class="note-card${selected}" data-note-id="${n.id}" onclick="openNote('${n.id}')">
+    <div class="note-card-header">
+      <span class="note-card-cat">${n.category || '笔记'}</span>
+      <div class="card-actions">
+        <button class="card-act-btn" onclick="event.stopPropagation();editNote('${n.id}')" title="编辑">✏️</button>
+        <button class="card-act-btn del" onclick="event.stopPropagation();deleteNote('${n.id}')" title="删除">🗑</button>
+      </div>
+    </div>
+    <div class="note-card-title">${escHtml(n.title)}</div>
+    ${preview ? `<div class="note-card-preview">${preview}</div>` : ''}
+    <div class="note-card-foot">
+      <span class="note-date">${date}</span>
+    </div>
+  </div>`;
+}
+
+function openNote(id) {
+  const note = state.notes.find(n => n.id === id);
+  if (!note) return;
+  state.selectedNote = note;
+
+  // 刷新卡片选中态
+  renderNotes();
+
+  // 隐藏流程专属 UI，显示详情面板
+  document.getElementById('detailTabs').style.display = 'none';
+  document.getElementById('shareBar').style.display = 'none';
+  document.getElementById('detailPanel').classList.remove('hidden');
+
+  renderNoteDetailHeader();
+  renderNoteDetailBody();
+}
+
+function renderNoteDetailHeader() {
+  const n = state.selectedNote;
+  document.getElementById('detailTitle').textContent = n.title;
+  const date = n.updated_at ? n.updated_at.slice(0,10) : '';
+  document.getElementById('detailMeta').innerHTML =
+    `<span class="note-card-cat">${n.category || '笔记'}</span>
+     <span style="font-size:11px;color:var(--sub)">${n.author}</span>
+     ${date ? `<span style="font-size:11px;color:var(--sub)">更新 ${date}</span>` : ''}`;
+}
+
+function renderNoteDetailBody() {
+  const n = state.selectedNote;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="note-detail-actions">
+      <button class="btn btn-ghost btn-sm" onclick="editNote('${n.id}')">✏️ 编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑 删除</button>
+    </div>
+    <div class="note-content">${escHtml(n.content || '')}</div>`;
+}
+
+function openCreateNote() {
+  state.editingNoteId = null;
+  document.getElementById('noteModalTitle').textContent = `新建笔记 · ${state.noteAuthor}`;
+  document.getElementById('nm_title').value = '';
+  document.getElementById('nm_category').value = '';
+  document.getElementById('nm_content').value = '';
+  openModal('noteModal');
+}
+
+function editNote(id) {
+  const note = state.notes.find(n => n.id === id);
+  if (!note) return;
+  state.editingNoteId = id;
+  document.getElementById('noteModalTitle').textContent = '编辑笔记';
+  document.getElementById('nm_title').value = note.title;
+  document.getElementById('nm_category').value = note.category || '';
+  document.getElementById('nm_content').value = note.content || '';
+  openModal('noteModal');
+}
+
+async function submitNote() {
+  const title = document.getElementById('nm_title').value.trim();
+  if (!title) { toast('标题不能为空', 'error'); return; }
+  const params = {
+    author: state.noteAuthor,
+    category: document.getElementById('nm_category').value.trim() || '笔记',
+    title,
+    content: document.getElementById('nm_content').value.trim()
+  };
+  try {
+    if (state.editingNoteId) {
+      await api({ action: 'updateWorkNote', id: state.editingNoteId, ...params });
+      toast('笔记已更新', 'success');
+    } else {
+      await api({ action: 'createWorkNote', ...params });
+      toast('笔记已创建', 'success');
+    }
+    closeModal('noteModal');
+    state.notes = await api({ action: 'getWorkNotes', author: state.noteAuthor });
+    // 若正在查看该笔记，刷新详情
+    if (state.editingNoteId && state.selectedNote?.id === state.editingNoteId) {
+      state.selectedNote = state.notes.find(n => n.id === state.editingNoteId);
+      if (state.selectedNote) { renderNoteDetailHeader(); renderNoteDetailBody(); }
+    }
+    renderNotes();
+  } catch (e) {}
+}
+
+async function deleteNote(id) {
+  if (!confirm('确定要删除此笔记吗？')) return;
+  try {
+    await api({ action: 'deleteWorkNote', id });
+    toast('笔记已删除', 'info');
+    state.selectedNote = null;
+    document.getElementById('detailPanel').classList.add('hidden');
+    state.notes = await api({ action: 'getWorkNotes', author: state.noteAuthor });
+    renderNotes();
+  } catch (e) {}
+}
+
+function switchToProcessMode() {
+  state.mode = 'processes';
+  state.noteAuthor = null;
+  state.selectedNote = null;
+  document.getElementById('notesToolbar').style.display = 'none';
+  document.getElementById('processToolbar').style.display = '';
+  document.getElementById('detailPanel').classList.add('hidden');
+  document.getElementById('detailTabs').style.display = '';
+  document.getElementById('shareBar').style.display = '';
+  // 重置过滤器回全部
+  state.filter = { category: 'all', person: 'all', cycle: 'all', q: '' };
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const allItem = document.querySelector('[data-filter="all"]');
+  if (allItem) allItem.classList.add('active');
+  renderCards();
+}
+
+// 转义 HTML 特殊字符，防止 XSS
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
