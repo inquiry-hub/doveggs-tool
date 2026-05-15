@@ -105,9 +105,9 @@
 <script>
   (function(){
     const pwd = localStorage.getItem('de_auth');
-    if(pwd !== 'doveggs2025'){
+    if(pwd !== 'doveggs2025' && pwd !== 'doveggs2026'){
       const input = prompt('请输入访问密码：');
-      if(input === 'doveggs2026'){
+      if(input === 'doveggs2026' || input === 'doveggs2025'){
         localStorage.setItem('de_auth', input);
       } else {
         document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0A0A0A;color:#777;font-family:monospace;font-size:14px">访问被拒绝</div>';
@@ -147,8 +147,9 @@
       <span class="arrow">→</span>
     </div>
   </a>
-<a class="card" href="./KOL_Scout.html">
-    <span class="card-tag tag-new">新上线</span>
+
+  <a class="card" href="./KOL_Scout.html">
+    <span class="card-tag tag-active">运行中</span>
     <div class="card-icon">🔍</div>
     <div class="card-title">KOL 达人搜集工具</div>
     <div class="card-desc">输入达人链接自动拉取 YouTube 数据，计算互动率，管理达人搜集池，追踪合作内容数据，生成 UTM 短链。导出格式直接对齐达人收集池表头。</div>
@@ -157,7 +158,20 @@
       <span class="arrow">→</span>
     </div>
   </a>
-</div> <!-- 这是 .grid 的结束标签，在 order-generator 卡片之后 -->
+
+  <!-- ★ 新增：流程管理系统 -->
+  <a class="card" href="./process-manager/index.html">
+    <span class="card-tag tag-new">新上线</span>
+    <div class="card-icon">📋</div>
+    <div class="card-title">内部流程管理系统</div>
+    <div class="card-desc">整合工厂对接、质检、发货、运营等全流程。可检索、可更新、权责分明，解决文档分散难追溯的问题。</div>
+    <div class="card-footer">
+      <span>流程管理</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+</div>
 
 <footer>
   DovEggs Internal Tools &nbsp;<span>·</span>&nbsp; 数据本地处理，安全可靠
