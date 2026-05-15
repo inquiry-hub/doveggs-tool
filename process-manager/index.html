@@ -938,13 +938,13 @@ function onSearch() {
           : state.allProcesses;
       }
     } else {
+      // 搜索激活时清除侧边栏选中态，避免视觉误导
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('processArea').innerHTML =
         '<div class="spinner"><div class="spin"></div>搜索中…</div>';
       try {
-        const params = { action: 'getProcesses', q };
-        if (state.filter.person !== 'all') params.person = state.filter.person;
-        if (state.filter.category !== 'all') params.category = state.filter.category;
-        state.processes = await api(params) || [];
+        // 搜索始终全局，不叠加侧边栏的 person/category 过滤
+        state.processes = await api({ action: 'getProcesses', q }) || [];
       } catch(e) { state.processes = []; }
     }
     renderCards();
