@@ -500,7 +500,8 @@ let GAS_URL = localStorage.getItem('doveggs_gas_url') || '';
 
 // ── 状态 ─────────────────────────────────────────────────────────
 const state = {
-  processes: [],
+  allProcesses: [],  // 全量缓存（无负责人/搜索过滤）
+  processes: [],     // 当前展示列表
   users: [],
   filter: { category: 'all', person: 'all', cycle: 'all', q: '' },
   selectedId: null,
@@ -591,7 +592,8 @@ async function loadAll() {
       api({ action: 'getProcesses' }),
       api({ action: 'getUsers' })
     ]);
-    state.processes = procs || [];
+    state.allProcesses = procs || [];
+    state.processes = state.allProcesses;
     state.users = users || [];
     renderSidebar();
     renderCards();
@@ -630,19 +632,10 @@ function renderSidebar() {
 
 // ── 渲染流程卡片 ──────────────────────────────────────────────────
 function renderCards() {
-  const { category, person, cycle, q } = state.filter;
+  const { cycle } = state.filter;
+  // category/person/q 过滤由 API 处理，此处仅做轻量 cycle 客户端过滤
   let list = [...state.processes];
-
-  if (category !== 'all') list = list.filter(p => p.category === category);
   if (cycle !== 'all') list = list.filter(p => p.cycle === cycle);
-  if (q) {
-    const lq = q.toLowerCase();
-    list = list.filter(p =>
-      p.name.toLowerCase().includes(lq) ||
-      (p.description || '').toLowerCase().includes(lq) ||
-      p.category.toLowerCase().includes(lq)
-    );
-  }
 
   const area = document.getElementById('processArea');
   if (list.length === 0) {
@@ -885,18 +878,37 @@ function downloadProcess() {
 }
 
 // ── 过滤器 ────────────────────────────────────────────────────────
-function setFilter(type, value, el) {
+async function setFilter(type, value, el) {
+  state.filter.q = '';
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = '';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+
   if (type === 'category') {
     state.filter.category = value;
     state.filter.person = 'all';
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    // 分类字段在 process 对象上，客户端缓存即可过滤
+    state.processes = value === 'all'
+      ? state.allProcesses
+      : state.allProcesses.filter(p => p.category === value);
+    renderCards();
   } else {
     state.filter.person = value;
     state.filter.category = 'all';
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (value === 'all') {
+      state.processes = state.allProcesses;
+      renderCards();
+    } else {
+      // 负责人在步骤表，需要后端过滤
+      document.getElementById('processArea').innerHTML =
+        '<div class="spinner"><div class="spin"></div>加载中…</div>';
+      try {
+        state.processes = await api({ action: 'getProcesses', person: value }) || [];
+        renderCards();
+      } catch(e) {}
+    }
   }
-  if (el) el.classList.add('active');
-  renderCards();
 }
 
 function setCycle(cycle, el) {
@@ -909,10 +921,34 @@ function setCycle(cycle, el) {
 let searchTimer;
 function onSearch() {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    state.filter.q = document.getElementById('searchInput').value.trim();
+  searchTimer = setTimeout(async () => {
+    const q = document.getElementById('searchInput').value.trim();
+    state.filter.q = q;
+
+    if (!q) {
+      // 无搜索词：恢复当前 category/person 过滤状态
+      const { category, person } = state.filter;
+      if (person !== 'all') {
+        try {
+          state.processes = await api({ action: 'getProcesses', person }) || [];
+        } catch(e) { state.processes = []; }
+      } else {
+        state.processes = category !== 'all'
+          ? state.allProcesses.filter(p => p.category === category)
+          : state.allProcesses;
+      }
+    } else {
+      document.getElementById('processArea').innerHTML =
+        '<div class="spinner"><div class="spin"></div>搜索中…</div>';
+      try {
+        const params = { action: 'getProcesses', q };
+        if (state.filter.person !== 'all') params.person = state.filter.person;
+        if (state.filter.category !== 'all') params.category = state.filter.category;
+        state.processes = await api(params) || [];
+      } catch(e) { state.processes = []; }
+    }
     renderCards();
-  }, 250);
+  }, 350);
 }
 
 // ── 新建/编辑流程 ─────────────────────────────────────────────────
@@ -1348,6 +1384,7 @@ function switchToProcessMode() {
   document.getElementById('shareBar').style.display = '';
   // 重置过滤器回全部
   state.filter = { category: 'all', person: 'all', cycle: 'all', q: '' };
+  state.processes = state.allProcesses;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const allItem = document.querySelector('[data-filter="all"]');
   if (allItem) allItem.classList.add('active');
