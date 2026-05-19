@@ -634,8 +634,9 @@ function isFancy(color) {
 // CONSTANTS
 // ════════════════════════════════════════════════════════════
 const TARGET_SHAPES = [
-  'Asscher','Cushion','Emerald','Heart','Marquise',
+  'Asscher','Cushion','Emerald','Heart','Hexagon','Marquise','Moval',
   'Oval','Pear','Princess','Radiant','Round',
+  'K100 Princess','LONG OVAL STEP CUT',
   'Step Cut Oval','Step Cut Pear','Step Cut Marquise',
   'Old Mine Oval','Old Mine Pear','Oval Rose Cut','Round Rose Cut'
 ];
@@ -1317,6 +1318,10 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
     ['Old Mine Pear','Old Mine Pear','Old Mine Pear'],
     ['Oval (Rose)','Oval Rose Cut','Oval Rose Cut'],
     ['Round (Rose)','Round Rose Cut','Round Rose Cut'],
+    ['Moval','Moval','Moval'],
+    ['Hexagon','Hexagon','Hexagon'],
+    ['K100 Princess','K100 Princess','K100 Princess'],
+    ['LONG OVAL STEP CUT','LONG OVAL STEP CUT','LONG OVAL STEP CUT'],
   ];
   const mapWs = XLSX.utils.aoa_to_sheet(mapData);
   mapWs['!cols'] = [{wch:28},{wch:28},{wch:28}];
@@ -1328,7 +1333,7 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
     ['地区筛选 Location', getSelectedLocsLabel()],
     ['匹配方式 Match Key','供应商 Ref.No. 与商店 SKU 均去掉所有连字符后转小写比对'],
     ['形状归一化','供应商和商店两端形状名称统一映射为标准形状后比对（见"形状映射"Sheet）'],
-    ['目标形状 Target Shapes','10种主形状 + 7种特殊切工形状，共17种'],
+    ['目标形状 Target Shapes','12种主形状 + 9种特殊切工形状，共21种'],
     ['1ct+ DEF筛选','Carat ≥ 1.00ct & Color ∈ D / E / F'],
     ['CVD证书比对','仅对 Grown=CVD 的匹配产品；从两边URL提取r=参数值比较；不一致时证书链接高亮'],
     ['价格比对','供应商$/ct. vs 商店price_per_carat；差值 > $0.50 时高亮'],
