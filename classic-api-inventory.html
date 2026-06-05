@@ -83,7 +83,7 @@
 
   /* ── UPLOAD CARDS ── */
   .upload-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
     margin-bottom: 24px;
   }
   @media (max-width: 800px) { .upload-grid { grid-template-columns: 1fr; } }
@@ -135,6 +135,17 @@
     font-family: var(--mono); margin-top: 6px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* 移除文件按钮（叠在 file input 上层，has-file 时显示） */
+  .drop-remove {
+    position: absolute; top: 8px; right: 8px; z-index: 3;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text2); font-size: 12px; line-height: 1; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    font-family: var(--font); padding: 0; transition: all .15s;
+  }
+  .drop-zone.has-file .drop-remove { display: flex; }
+  .drop-remove:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
   /* ── OPTIONS ── */
   .options-card {
@@ -458,16 +469,6 @@
         <div class="file-name" id="sup-name" style="display:none"></div>
       </div>
     </div>
-    <div class="upload-card">
-      <div class="card-label"><span class="dot orange"></span>商店库存表</div>
-      <div class="card-sub">Store Inventory · Shopify 导出</div>
-      <div class="drop-zone" id="sto-drop">
-        <input type="file" id="sto-file" accept=".xlsx,.xls">
-        <div class="drop-icon">🏪</div>
-        <div class="drop-text">拖拽文件到此处，或 <strong>点击选择</strong></div>
-        <div class="file-name" id="sto-name" style="display:none"></div>
-      </div>
-    </div>
 
     <div class="upload-card" style="border-color: rgba(124,95,255,.3);">
       <div class="card-label"><span class="dot" style="background:var(--accent2)"></span>供应商旧库存表（价格对比用）</div>
@@ -477,6 +478,28 @@
         <div class="drop-icon">📊</div>
         <div class="drop-text">拖拽旧版供应商表，或 <strong>点击选择</strong></div>
         <div class="file-name" id="old-sup-name" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="upload-card">
+      <div class="card-label"><span class="dot orange"></span>商店库存表（Matrixify 格式）</div>
+      <div class="card-sub">Store · Matrixify 导出 · 适用于 5000 以内产品</div>
+      <div class="drop-zone" id="sto-drop">
+        <input type="file" id="sto-file" accept=".xlsx,.xls">
+        <div class="drop-icon">🏪</div>
+        <div class="drop-text">拖拽文件到此处，或 <strong>点击选择</strong></div>
+        <div class="file-name" id="sto-name" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="upload-card" style="border-color: rgba(249,115,22,.3);">
+      <div class="card-label"><span class="dot" style="background:var(--orange)"></span>商店库存表（Shopify 原生导出）</div>
+      <div class="card-sub">Store · Shopify Native Export · 适用于超 5000 产品</div>
+      <div class="drop-zone" id="shopify-drop">
+        <input type="file" id="shopify-file" accept=".xlsx,.xls">
+        <div class="drop-icon">🛍️</div>
+        <div class="drop-text">拖拽 Shopify 原生导出表，或 <strong>点击选择</strong></div>
+        <div class="file-name" id="shopify-name" style="display:none"></div>
       </div>
     </div>
   </div>
@@ -663,11 +686,28 @@ const WEIGHT_COL = 'Metafield: custom.weight [single_line_text_field]';
 const CERT_COL   = 'Metafield: custom.certificate_file [single_line_text_field]';
 const PPC_COL    = 'Metafield: custom.price_per_carat [single_line_text_field]';
 
+// Shopify 原生导出列名（与上面 Matrixify 列名一一对应，解析时归一化到上面这些键）
+const SHO_VENDOR_COL = 'Vendor';
+const SHO_TAGS_COL   = 'Tags';
+const SHO_HANDLE_COL = 'Handle';
+const SHO_PUB_COL    = 'Published';
+const SHO_STATUS_COL = 'Status';
+const SHO_SKU_COL    = 'Variant SKU';
+const SHO_SHAPE_COL  = 'Shape (product.metafields.custom.shape)';
+const SHO_COLOR_COL  = 'Color (product.metafields.custom.color)';
+const SHO_WEIGHT_COL = 'Weight (product.metafields.custom.weight)';
+const SHO_REPORT_COL = 'Report (product.metafields.custom.report)';
+const SHO_CERT_COL   = 'Certificate File (product.metafields.custom.certificate_file)';
+const SHO_PPC_COL    = 'Price Per Carat (product.metafields.custom.price_per_carat)';
+const SHO_VENDOR_VAL = 'DovEggs';            // Classic 裸钻的 Vendor 值
+const SHO_SOLD_TAG   = 'sold-by-doveggs';    // 已售标签（小写比对）
+
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
 let supType = 'filtered';
 let supFile = null, stoFile = null;
+let shopifyFile = null;
 let xlsxResult = null;
 let oldSupFile  = null;
 let priceRegion = 'hk';   // 'hk' | 'all'
@@ -756,6 +796,18 @@ function setupDrop(dropId, inputId, nameId, onFile) {
   const input = document.getElementById(inputId);
   const nameEl = document.getElementById(nameId);
 
+  // 动态创建移除按钮（叠在 file input 上层）
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'drop-remove';
+  removeBtn.textContent = '✕';
+  removeBtn.title = '移除文件 Remove';
+  drop.appendChild(removeBtn);
+  removeBtn.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();   // 防止触发文件选择框
+    clearFile();
+  });
+
   input.addEventListener('change', () => {
     if(input.files[0]) setFile(input.files[0]);
   });
@@ -772,10 +824,19 @@ function setupDrop(dropId, inputId, nameId, onFile) {
     nameEl.style.display = 'block';
     drop.classList.add('has-file');
   }
+
+  function clearFile() {
+    input.value = '';        // 重置 input，可重新选同一文件
+    onFile(null);            // 清空状态变量（supFile/stoFile/...）
+    nameEl.textContent = '';
+    nameEl.style.display = 'none';
+    drop.classList.remove('has-file');
+  }
 }
 
 setupDrop('sup-drop','sup-file','sup-name', f => supFile = f);
 setupDrop('sto-drop','sto-file','sto-name', f => stoFile = f);
+setupDrop('shopify-drop','shopify-file','shopify-name', f => shopifyFile = f);
 setupDrop('old-sup-drop','old-sup-file','old-sup-name', f => oldSupFile = f);
 
 function showError(msg) {
@@ -831,6 +892,81 @@ function normStoShape(s) {
   return STO_SHAPE_MAP[s] || s;
 }
 
+// ────────────────────────────────────────────────────────────
+// Shopify 原生导出解析（与 Matrixify 流程口径对齐）
+// 返回值结构与 Matrixify 的 stoDedup 完全一致，下游逻辑零改动复用
+// ────────────────────────────────────────────────────────────
+function parseShopifyNativeRows(wb) {
+  const sheetName = wb.SheetNames[0];
+  let rows = sheetToRows(wb, sheetName);
+
+  // 1) 只保留 Classic 裸钻：Vendor === DovEggs
+  rows = rows.filter(r =>
+    String(r[SHO_VENDOR_COL]||'').trim().toLowerCase() === SHO_VENDOR_VAL.toLowerCase()
+  );
+
+  // 2) fill-down：多变体产品的产品级 metafield 只在首行，向下补齐
+  //    （Tags / 状态 / Vendor 等也按同一 Handle 补齐，避免后续过滤误杀变体行）
+  const fillFields = [SHO_SHAPE_COL, SHO_COLOR_COL, SHO_WEIGHT_COL,
+                      SHO_REPORT_COL, SHO_CERT_COL, SHO_PPC_COL,
+                      SHO_TAGS_COL, SHO_STATUS_COL, SHO_PUB_COL];
+  let lastHandle = '', lastVals = {};
+  for(const r of rows) {
+    const handle = String(r[SHO_HANDLE_COL]||'').trim();
+    if(handle && handle !== lastHandle) {
+      lastHandle = handle;
+      for(const f of fillFields) lastVals[f] = r[f] || '';
+    } else {
+      for(const f of fillFields) if(!r[f]) r[f] = lastVals[f] || '';
+    }
+  }
+
+  // 3) 只留在库：库存 > 0 且 Tags 不含 Sold-By-DovEggs（双保险）
+  rows = rows.filter(r => {
+    const qty  = parseFloat(r[INV_COL]);
+    const tags = String(r[SHO_TAGS_COL]||'').toLowerCase();
+    return !isNaN(qty) && qty > 0 && !tags.includes(SHO_SOLD_TAG);
+  });
+
+  // 4) 排除 draft / archived / 未发布
+  rows = rows.filter(r => {
+    const status = String(r[SHO_STATUS_COL]||'').toLowerCase().trim();
+    const pub    = String(r[SHO_PUB_COL]||'').toLowerCase().trim();
+    return status !== 'draft' && status !== 'archived' && pub !== 'false';
+  });
+
+  // 5) 按目标形状筛选
+  const shapeNorm = r => normStoShape(String(r[SHO_SHAPE_COL]||'').trim());
+  rows = rows.filter(r => TARGET_SHAPES.includes(shapeNorm(r)));
+
+  // 6) 按 Variant SKU 去重 + 字段归一化（复制到 Matrixify 同名键）
+  const seenSku = new Set();
+  const dedup = [];
+  for(const r of rows) {
+    const sku = r[SHO_SKU_COL];
+    if(!sku) continue;
+    const norm = normSku(sku);
+    if(seenSku.has(norm)) continue;
+    seenSku.add(norm);
+    dedup.push({
+      ...r,
+      // 归一化：把 Shopify 列值复制到 Matrixify 键，供下游统一读取
+      [SKU_COL]:    r[SHO_SKU_COL],
+      [SHAPE_COL]:  r[SHO_SHAPE_COL],
+      [COLOR_COL]:  r[SHO_COLOR_COL],
+      [WEIGHT_COL]: r[SHO_WEIGHT_COL],
+      [REPORT_COL]: r[SHO_REPORT_COL],
+      [CERT_COL]:   r[SHO_CERT_COL],
+      [PPC_COL]:    r[SHO_PPC_COL],
+      _skuNorm:     norm,
+      _shapeNorm:   shapeNorm(r),
+      _certNumSto:  extractCertNum(r[SHO_CERT_COL]),
+      _ppcSto:      parseFloat(r[SHO_PPC_COL]) || null,
+    });
+  }
+  return dedup;
+}
+
 function extractCertNum(url) {
   if(!url) return '';
   url = String(url).trim();
@@ -864,16 +1000,19 @@ function fmtPrice(v) {
 async function runReconciliation() {
   clearError();
   // Determine run mode based on uploaded files
-  const hasSupNew = !!supFile;
-  const hasSto    = !!stoFile;
-  const hasSupOld = !!oldSupFile;
+  const hasSupNew  = !!supFile;
+  const hasSto     = !!stoFile;        // Matrixify 格式商店表
+  const hasShopify = !!shopifyFile;    // Shopify 原生导出
+  const hasSupOld  = !!oldSupFile;
+  const hasStore   = hasSto || hasShopify;
 
   if(!hasSupNew) { showError('请至少上传供应商库存表 Supplier file is required'); return; }
-  if(!hasSto && !hasSupOld) { showError('请上传商店库存表（对账）或旧版供应商表（价格分析），或两者都上传'); return; }
+  if(hasSto && hasShopify) { showError('两个商店入口只能上传其中一个：Matrixify 格式 或 Shopify 原生导出，请移除其中一个'); return; }
+  if(!hasStore && !hasSupOld) { showError('请上传商店库存表（对账）或旧版供应商表（价格分析），或两者都上传'); return; }
   if(getSelectedLocs().size === 0) { showError('请至少选择一个地区 Please select at least one location'); return; }
 
   // Mode flags
-  const doReconcile = hasSupNew && hasSto;      // inventory reconciliation
+  const doReconcile = hasSupNew && hasStore;    // inventory reconciliation
   const doPriceAnalysis = hasSupNew;            // price analysis (always when supplier present)
 
   const btn = document.getElementById('run-btn');
@@ -913,7 +1052,8 @@ async function runReconciliation() {
 
     // Step 1
     markStep(1);
-    const stoWb = hasSto ? await readXlsx(stoFile) : null;
+    const stoWb     = hasSto ? await readXlsx(stoFile) : null;
+    const shopifyWb = hasShopify ? await readXlsx(shopifyFile) : null;
 
     // Step 2 — Filter supplier
     markStep(2);
@@ -967,9 +1107,13 @@ async function runReconciliation() {
       r._certiClean = safeCerti(r['Certi.No.']);
     });
 
-    // Step 2b — Filter store (only if store file uploaded)
+    // Step 2b — Filter store (按上传入口分流)
     let stoDedup = [];
-    if(hasSto) {
+    if(hasShopify) {
+      // Shopify 原生导出：独立解析（Vendor / 库存 / 标签 / 状态 / 形状 / 去重 / 归一化）
+      stoDedup = parseShopifyNativeRows(shopifyWb);
+    } else if(hasSto) {
+      // Matrixify 格式：原有逻辑不变
       let stoSheetName = stoWb.SheetNames.includes('Products') ? 'Products' : stoWb.SheetNames[0];
       let stoRows = sheetToRows(stoWb, stoSheetName);
       stoRows = stoRows.filter(r => String(r.Status||'').toLowerCase().trim() !== 'draft');
