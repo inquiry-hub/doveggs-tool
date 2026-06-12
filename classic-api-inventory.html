@@ -630,7 +630,7 @@
 // ════════════════════════════════════════════════════════════
 // PRICE ANALYSIS CONSTANTS
 // ════════════════════════════════════════════════════════════
-const WHITE_COLORS = new Set(['D','E','F','G','H','I','J','FG','EF']);
+const WHITE_COLORS = new Set(['D','E','F','G','H','I','J','FG','EF','Q-R','S-T','U-V','Y-Z']);
 const DEF_SET      = new Set(['D','E','F']);
 const CT_BANDS     = ['<1','1-2','2-3','3-4','4-5','5-6','6-7','7+'];
 // Locations now dynamic — see getSelectedLocs()
@@ -659,7 +659,7 @@ function isFancy(color) {
 const TARGET_SHAPES = [
   'Asscher','Cushion','Emerald','Heart','Hexagon','Marquise','Moval',
   'Oval','Pear','Princess','Radiant','Round',
-  'K100 Princess','LONG OVAL STEP CUT',
+  'K100 Princess','K100 Round','LONG STEP CUT OVAL','LONG STEP CUT PEAR',
   'Step Cut Oval','Step Cut Pear','Step Cut Marquise',
   'Old Mine Oval','Old Mine Pear','Oval Rose Cut','Round Rose Cut'
 ];
@@ -1465,7 +1465,9 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
     ['Moval','Moval','Moval'],
     ['Hexagon','Hexagon','Hexagon'],
     ['K100 Princess','K100 Princess','K100 Princess'],
-    ['LONG OVAL STEP CUT','LONG OVAL STEP CUT','LONG OVAL STEP CUT'],
+    ['K100 Round','K100 Round','K100 Round'],
+    ['LONG STEP CUT OVAL','LONG STEP CUT OVAL','LONG STEP CUT OVAL'],
+    ['LONG STEP CUT PEAR','LONG STEP CUT PEAR','LONG STEP CUT PEAR'],
   ];
   const mapWs = XLSX.utils.aoa_to_sheet(mapData);
   mapWs['!cols'] = [{wch:28},{wch:28},{wch:28}];
@@ -1477,7 +1479,7 @@ function buildExcel(allRows, rows1ctDef, ssAll, ssDef, meta) {
     ['地区筛选 Location', getSelectedLocsLabel()],
     ['匹配方式 Match Key','供应商 Ref.No. 与商店 SKU 均去掉所有连字符后转小写比对'],
     ['形状归一化','供应商和商店两端形状名称统一映射为标准形状后比对（见"形状映射"Sheet）'],
-    ['目标形状 Target Shapes','12种主形状 + 9种特殊切工形状，共21种'],
+    ['目标形状 Target Shapes','12种主形状 + 11种特殊切工形状，共23种'],
     ['1ct+ DEF筛选','Carat ≥ 1.00ct & Color ∈ D / E / F'],
     ['CVD证书比对','仅对 Grown=CVD 的匹配产品；从两边URL提取r=参数值比较；不一致时证书链接高亮'],
     ['价格比对','供应商$/ct. vs 商店price_per_carat；差值 > $0.50 时高亮'],
