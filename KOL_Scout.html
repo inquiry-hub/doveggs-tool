@@ -162,7 +162,7 @@ td.name-cell a:hover{color:var(--gold2)}
 <body>
 <header>
   <h1>KOL Scout</h1>
-  <span>DovEggs · v3.5 · Influencer Research Tool</span>
+  <span>DovEggs · v3.6 · Influencer Research Tool</span>
 </header>
 <div class="container">
 
@@ -469,10 +469,14 @@ td.name-cell a:hover{color:var(--gold2)}
       <textarea id="bsKeyword" style="min-height:72px;font-size:.74rem" placeholder="jewelry haul&#10;fashion review&#10;lifestyle vlog"></textarea>
     </div>
     <div class="field">
-      <label>国家代码（可选，留空不限）</label>
-      <input id="bsCountry" placeholder="US / GB / AU / CA（频道注册国，区分大小写无关）">
-      <p style="font-size:.66rem;color:var(--amber);margin-top:.3rem;line-height:1.5">⚠️ YouTube 国家字段很多频道没填，填了会把「没填国家」的频道全部误杀（含实际是该国的），建议留空</p>
+      <label>允许国家（逗号分隔，留空=不限）</label>
+      <input id="bsCountry" value="US,CA,GB,IE,DE,FR,NL,BE,LU,AT,CH,IT,ES,PT,SE,NO,DK,FI,PL,CZ" placeholder="US,CA,GB,IE,DE,FR…">
+      <p style="font-size:.66rem;color:var(--tx3);margin-top:.3rem;line-height:1.5">国家字段有值且不在列表内 → 排除（如 IN）；国家留空 → 保留并标注「未知」，再按英语、地名、货币符号打分</p>
     </div>
+  </div>
+  <div class="g2" style="margin-bottom:.8rem">
+    <div class="field"><label>搜索地区 regionCode（默认 US，留空不限）</label><input id="bsRegion" value="US" placeholder="US"></div>
+    <div class="field"><label>搜索语言 relevanceLanguage（默认 en，留空不限）</label><input id="bsLang" value="en" placeholder="en"></div>
   </div>
   <div class="g4" style="margin-bottom:.8rem">
     <div class="field">
@@ -506,6 +510,29 @@ td.name-cell a:hover{color:var(--gold2)}
     </button>
     <button class="btn btn-ghost" onclick="resetSearch()">重置结果</button>
   </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">种子扩展（从已认可的博主找相邻博主）</div>
+  <div class="field">
+    <label>种子博主链接（每行一个，建议 5 个，最多 10 个）</label>
+    <textarea id="seedInput" style="min-height:90px;font-size:.74rem" placeholder="https://www.youtube.com/@xxx&#10;https://www.youtube.com/channel/UC..."></textarea>
+  </div>
+  <div class="field" style="margin-bottom:.6rem;max-width:320px">
+    <label>每个种子的关键词搜索数（0-3，每词 100 单位）</label>
+    <input type="number" id="seedKwCount" value="2" min="0" max="3">
+  </div>
+  <p style="font-size:.66rem;color:var(--tx3);margin:.4rem 0;line-height:1.6">候选来源：① 种子频道的推荐频道（channelSections）；② 简介与最近 10 条视频描述里的 @handle / 频道链接；③ 种子最近视频的高频标签（无标签则用最新标题前 4 词）做视频关键词搜索。下方「搜索条件」里的粉丝量、地域、播放量、互动率同样生效。每个种子约消耗 4 单位 + 每个 @handle 1 单位 + 关键词数 × 100 单位。</p>
+  <div class="action-row">
+    <button class="btn btn-primary" id="seedBtn" onclick="seedExpand()"><span id="seedBtnText">从种子扩展</span></button>
+  </div>
+</div>
+
+<div id="seedStatus" class="status-bar"></div>
+
+<div class="progress-section" id="seedProgressSection">
+  <div class="progress-wrap"><div class="progress-bar-fill" id="seedProgressBar"></div></div>
+  <div class="progress-text" id="seedProgressText"></div>
 </div>
 
 <div id="bsStatus" class="status-bar"></div>
@@ -1193,7 +1220,7 @@ async function batchSearch(){
   // 多关键词：一行一个，去空去重
   const keywords = [...new Set(rawKw.split('\n').map(s=>s.trim()).filter(Boolean))];
 
-  const filterCountry  = document.getElementById('bsCountry').value.trim().toUpperCase();
+  const allowSet       = parseAllowCountries();
   const filterMinSub   = +document.getElementById('bsMinSub').value   || 0;
   const filterMaxSub   = +document.getElementById('bsMaxSub').value   || Infinity;
   const filterMinViews = +document.getElementById('bsMinViews').value || 0;
@@ -1251,6 +1278,10 @@ async function batchSearch(){
           `搜索「${kw}」第 ${page+1} 页 · 已找到 ${newCids.length} 个新频道`);
 
         let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(kw)}&type=video&maxResults=50&key=${YT_KEY}`;
+        const regionCode = document.getElementById('bsRegion').value.trim().toUpperCase();
+        const relLang    = document.getElementById('bsLang').value.trim();
+        if(regionCode) url += `&regionCode=${regionCode}`;
+        if(relLang)    url += `&relevanceLanguage=${encodeURIComponent(relLang)}`;
         if(publishedAfter) url += `&order=date&publishedAfter=${encodeURIComponent(publishedAfter)}`;
         if(pageToken)      url += `&pageToken=${pageToken}`;
 
@@ -1290,110 +1321,12 @@ async function batchSearch(){
     setProgress('bsProgressBar','bsProgressText','bsProgressSection', 12,
       `翻了 ${totalPages} 页，找到 ${channelIds.length} 个全新频道，正在拉取详情...`);
 
-    // Step 2: channels.list 分批（每批最多 50 个 id，超过 50 需拆分）
-    let channels = [];
-    for(let i=0; i<channelIds.length; i+=50){
-      const idBatch = channelIds.slice(i, i+50);
-      const cr = await fetch(
-        `https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${idBatch.join(',')}&key=${YT_KEY}`
-      );
-      const cd = await cr.json();
-      addQuota(1);
-      if(isQuotaError(cd)){ quotaHit = true; break; }
-      if(cd.items) channels.push(...cd.items);
-    }
-
-    // Pre-filter by subscribers and country (no video data needed)
-    channels = channels.filter(ch=>{
-      const subs    = +ch.statistics?.subscriberCount || 0;
-      const country = (ch.snippet?.country||'').toUpperCase();
-      if(filterCountry && country !== filterCountry) return false;
-      if(subs < filterMinSub) return false;
-      if(filterMaxSub !== Infinity && subs > filterMaxSub) return false;
-      return true;
+    // Step 2-3: 频道详情 + 粉丝/地域粗筛 + 视频数据（与种子扩展共用 enrichChannels）
+    const enr = await enrichChannels(channelIds, {
+      minSub:filterMinSub, maxSub:filterMaxSub, minViews:filterMinViews, maxViews:filterMaxViews, minER:filterMinER, allow:allowSet
     });
-
-    if(!channels.length){
-      setStatus('bsStatus','无频道通过粉丝量/国家筛选，请调整条件','error');
-      btn.disabled=false; document.getElementById('bsBtnText').textContent='开始搜索';
-      hideProgress('bsProgressSection'); return;
-    }
-
-    setProgress('bsProgressBar','bsProgressText','bsProgressSection', 15,
-      `${channelIds.length} 个频道中有 ${channels.length} 个通过粉丝/国家筛选，正在拉取视频数据...`);
-
-    // Step 3: fetch video data in batches of 5 (concurrent)
-    const results = [];
-    const batchSize = 5;
-    for(let i=0; i<channels.length; i+=batchSize){
-      const batch = channels.slice(i, i+batchSize);
-      const pct = 15 + Math.round(((i+batchSize)/channels.length)*82);
-      setProgress('bsProgressBar','bsProgressText','bsProgressSection',
-        Math.min(pct,97), `拉取视频数据 ${i+1}–${Math.min(i+batchSize, channels.length)} / ${channels.length}...`);
-
-      await Promise.all(batch.map(async ch=>{
-        const cid      = ch.id;
-        const snippet  = ch.snippet||{};
-        const stats    = ch.statistics||{};
-        const desc     = snippet.description||'';
-        let email = extractEmail(desc);
-        const country  = snippet.country||'';
-        const subs     = +stats.subscriberCount||0;
-        const name     = snippet.title||cid;
-        // 统一用 /channel/UCxxxx 形式：链接自带 channelId，去重最可靠（不用 @handle）
-        const chanUrl  = `https://www.youtube.com/channel/${cid}`;
-
-        // activities.list (1 unit)
-        let avgViews=0, avgLikes=0, avgComments=0;
-        try{
-          const vr = await fetch(
-            `https://www.googleapis.com/youtube/v3/activities?part=contentDetails&channelId=${cid}&maxResults=10&key=${YT_KEY}`
-          );
-          const vd = await vr.json();
-          addQuota(1);
-          const ids = (vd.items||[])
-            .filter(i=>i.contentDetails?.upload?.videoId)
-            .map(i=>i.contentDetails.upload.videoId).join(',');
-          if(ids){
-            // part=statistics,snippet: 顺带扫描视频描述，0 额外配额
-            const vs = await fetch(
-              `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${ids}&key=${YT_KEY}`
-            );
-            const vsd = await vs.json();
-            addQuota(1);
-            let n=0;
-            (vsd.items||[]).forEach(v=>{
-              avgViews   +=+v.statistics.viewCount||0;
-              avgLikes   +=+v.statistics.likeCount||0;
-              avgComments+=+v.statistics.commentCount||0;
-              n++;
-              if(!email) email = extractEmail(v.snippet?.description||'');
-            });
-            if(n){ avgViews=Math.round(avgViews/n); avgLikes=Math.round(avgLikes/n); avgComments=Math.round(avgComments/n); }
-          }
-          // brandingSettings: 补充邮箱来源 (+1 unit)
-          if(!email){
-            try{
-              const br = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=brandingSettings&id=${cid}&key=${YT_KEY}`);
-              const bd = await br.json();
-              addQuota(1);
-              email = extractEmail(bd.items?.[0]?.brandingSettings?.channel?.description||'');
-            } catch(e){}
-          }
-        } catch(e){}
-
-        const er = avgViews>0 ? (avgLikes+avgComments)/avgViews*100 : null;
-
-        // Apply views / ER filters
-        if(avgViews < filterMinViews) return;
-        if(filterMaxViews!==Infinity && avgViews > filterMaxViews) return;
-        if(filterMinER>0 && (er===null || er < filterMinER)) return;
-
-        const inDb = isInDb(chanUrl, cid);
-        const inSheet = inSheetPool(cid, chanUrl);
-        results.push({ cid, name, chanUrl, country, subs, avgViews, avgLikes, avgComments, er, email, inDb, inSheet });
-      }));
-    }
+    if(enr.quotaHit) quotaHit = true;
+    const results = enr.results;
 
     // 跨搜索去重：先按历史 seen 标注每条结果（是否之前搜过），再把本次结果写入 seen
     const today = new Date().toISOString().split('T')[0];
@@ -1426,6 +1359,299 @@ async function batchSearch(){
 
   btn.disabled=false;
   document.getElementById('bsBtnText').textContent='开始搜索';
+}
+
+
+// ── 地域判断：国家为硬条件（有值且不在允许列表 → 排除），空值保留并打分 ──
+const INDIC_RE = /[ऀ-ॿঀ-৿਀-੿઀-૿଀-୿஀-௿ఀ-౿ಀ-೿ഀ-ൿ]/;
+const GEO_HINT_RE = /\b(usa|u\.s\.a?|america|american|california|texas|florida|new york|nyc|los angeles|chicago|toronto|vancouver|canada|canadian|london|uk|british|england|scotland|dublin|ireland|paris|berlin|amsterdam|sweden|germany|france)\b|[$£€]/i;
+function parseAllowCountries(){
+  return new Set(document.getElementById('bsCountry').value.toUpperCase().split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean));
+}
+function geoJudge(country, text, allowSet){
+  const c = (country||'').trim().toUpperCase();
+  if(c){
+    if(allowSet.size && !allowSet.has(c)) return { keep:false, label:c, score:-1 };
+    return { keep:true, label:c, score: ['US','CA','GB'].includes(c) ? 10 : 6 };
+  }
+  const t = text||'';
+  if(INDIC_RE.test(t)) return { keep:false, label:'未知(印度文字)', score:-1 };
+  let s = 0;
+  const letters = t.match(/\p{L}/gu) || [];
+  const latin   = t.match(/[A-Za-z]/g) || [];
+  if(letters.length >= 20 && latin.length / letters.length > 0.9) s += 2;   // 以拉丁字母为主（英语信号）
+  if(GEO_HINT_RE.test(t)) s += 2;                                            // 地名 / 货币符号等
+  return { keep:true, label: s>=2 ? '未知(疑似欧美)' : '未知', score:s };
+}
+
+// 从文本里取 UC 频道 ID 和 @handle（前面不能是字母数字，避免把邮箱当 handle）
+function extractRefs(text){
+  const t = text||'';
+  const cids    = [...t.matchAll(/youtube\.com\/channel\/(UC[\w-]{22})/g)].map(m=>m[1]);
+  const handles = [...t.matchAll(/(?<![\w.])@([A-Za-z0-9._-]{3,30})/g)].map(m=>m[1]);
+  return { cids, handles };
+}
+
+// 共用：channels.list → 粉丝/地域粗筛 → uploads 播放列表取最近视频 → 均播放/互动率
+async function enrichChannels(channelIds, f){
+  let quotaHit = false;
+  let channels = [];
+  for(let i=0; i<channelIds.length; i+=50){
+    const idBatch = channelIds.slice(i, i+50);
+    const cr = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${idBatch.join(',')}&key=${YT_KEY}`);
+    const cd = await cr.json();
+    addQuota(1);
+    if(isQuotaError(cd)){ quotaHit = true; break; }
+    if(cd.items) channels.push(...cd.items);
+  }
+
+  const geoMap = {};
+  channels = channels.filter(ch=>{
+    const subs = +ch.statistics?.subscriberCount || 0;
+    if(subs < f.minSub) return false;
+    if(f.maxSub !== Infinity && subs > f.maxSub) return false;
+    const g = geoJudge(ch.snippet?.country, (ch.snippet?.title||'')+' '+(ch.snippet?.description||''), f.allow);
+    if(!g.keep) return false;
+    geoMap[ch.id] = g;
+    return true;
+  });
+
+  const results = [];
+  if(!channels.length) return { results, quotaHit };
+
+  for(let i=0; i<channels.length; i+=5){
+    const batch = channels.slice(i, i+5);
+    await Promise.all(batch.map(async ch=>{
+      const cid     = ch.id;
+      const snippet = ch.snippet||{};
+      const stats   = ch.statistics||{};
+      const g       = geoMap[cid];
+      let email     = extractEmail(snippet.description||'');
+      const subs    = +stats.subscriberCount||0;
+      const name    = snippet.title||cid;
+      const chanUrl = `https://www.youtube.com/channel/${cid}`;
+
+      let avgViews=0, avgLikes=0, avgComments=0;
+      try{
+        // uploads 播放列表（1 单位）替代 search.list（100 单位）
+        const pr = await fetch(
+          `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=UU${cid.slice(2)}&maxResults=10&key=${YT_KEY}`
+        );
+        const pd = await pr.json();
+        addQuota(1);
+        const ids = (pd.items||[]).map(i=>i.contentDetails?.videoId).filter(Boolean).join(',');
+        if(ids){
+          const vs = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${ids}&key=${YT_KEY}`
+          );
+          const vsd = await vs.json();
+          addQuota(1);
+          let n=0;
+          (vsd.items||[]).forEach(v=>{
+            avgViews   +=+v.statistics.viewCount||0;
+            avgLikes   +=+v.statistics.likeCount||0;
+            avgComments+=+v.statistics.commentCount||0;
+            n++;
+            if(!email) email = extractEmail(v.snippet?.description||'');
+          });
+          if(n){ avgViews=Math.round(avgViews/n); avgLikes=Math.round(avgLikes/n); avgComments=Math.round(avgComments/n); }
+        }
+        // brandingSettings: 补充邮箱来源 (+1 unit)
+        if(!email){
+          try{
+            const br = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=brandingSettings&id=${cid}&key=${YT_KEY}`);
+            const bd = await br.json();
+            addQuota(1);
+            email = extractEmail(bd.items?.[0]?.brandingSettings?.channel?.description||'');
+          } catch(e){}
+        }
+      } catch(e){}
+
+      const er = avgViews>0 ? (avgLikes+avgComments)/avgViews*100 : null;
+      if(avgViews < f.minViews) return;
+      if(f.maxViews!==Infinity && avgViews > f.maxViews) return;
+      if(f.minER>0 && (er===null || er < f.minER)) return;
+
+      results.push({
+        cid, name, chanUrl, country:g.label, geoScore:g.score, subs, avgViews, avgLikes, avgComments, er, email,
+        inDb: isInDb(chanUrl, cid), inSheet: inSheetPool(cid, chanUrl)
+      });
+    }));
+  }
+  results.sort((a,b)=> (b.geoScore-a.geoScore) || (b.avgViews-a.avgViews));
+  return { results, quotaHit };
+}
+
+// ── 种子扩展 ──
+// 解析种子：/channel/UC… 直接用；/@handle 用 forHandle（1 单位）
+async function fetchSeedChannel(raw){
+  const u = raw.trim();
+  let q = null;
+  const cm = u.match(/youtube\.com\/channel\/(UC[\w-]{22})/);
+  if(cm) q = `id=${cm[1]}`;
+  if(!q){
+    const hm = u.match(/youtube\.com\/@([\w.-]+)/) || (u.startsWith('@') ? [null, u.slice(1)] : null);
+    if(hm) q = `forHandle=${encodeURIComponent('@'+hm[1])}`;
+  }
+  if(!q) return null;
+  const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&${q}&key=${YT_KEY}`);
+  const d = await r.json();
+  addQuota(1);
+  if(isQuotaError(d)) throw new Error('QUOTA');
+  return d.items?.[0] || null;
+}
+
+async function seedExpand(){
+  const raw = document.getElementById('seedInput').value.trim();
+  if(!raw){ setStatus('seedStatus','请先填写种子博主链接','error'); return; }
+  if(!YT_KEY){ setStatus('seedStatus','请先在【达人搜集】Tab 底部填写 YouTube API Key','error'); return; }
+
+  const seeds = [...new Set(raw.split('\n').map(s=>s.trim()).filter(Boolean))].slice(0,10);
+  const btn = document.getElementById('seedBtn');
+  btn.disabled = true;
+  document.getElementById('seedBtnText').innerHTML = '<span class="spinner"></span> 扩展中...';
+  document.getElementById('bsResultsWrap').style.display = 'none';
+  setStatus('seedStatus','','info');
+  quotaUsed = 0;
+
+  const filters = {
+    minSub:+document.getElementById('bsMinSub').value||0, maxSub:+document.getElementById('bsMaxSub').value||Infinity,
+    minViews:+document.getElementById('bsMinViews').value||0, maxViews:+document.getElementById('bsMaxViews').value||Infinity,
+    minER:+document.getElementById('bsMinER').value||0, allow:parseAllowCountries()
+  };
+  const SEED_PROG = ['seedProgressBar','seedProgressText','seedProgressSection'];
+  const finish = ()=>{ btn.disabled=false; document.getElementById('seedBtnText').textContent='从种子扩展'; };
+
+  try{
+    if(SHEET_URL){ try{ await loadSheetPool(); } catch(e){} }
+
+    const candidates = new Map();   // cid -> 来源标签
+    const seedIds = new Set();
+    const keywordJobs = [];          // 关键词搜索任务：{kw, seedId, label}
+    let quotaHit = false;
+
+    for(let s=0; s<seeds.length; s++){
+      setProgress(...SEED_PROG, Math.round((s/seeds.length)*40), `解析种子 ${s+1}/${seeds.length}：${seeds[s]}`);
+      const ch = await fetchSeedChannel(seeds[s]);
+      if(!ch){ continue; }
+      const seedName = ch.snippet?.title || ch.id;
+      const label = '种子·' + seedName;
+      seedIds.add(ch.id);
+      const seedTags = [], seedTitles = [];   // 最近视频的标签 / 标题，用于关键词
+
+      const refs = extractRefs(ch.snippet?.description);
+      const addCid = (cid)=>{ if(!candidates.has(cid)) candidates.set(cid, label); };
+      refs.cids.forEach(addCid);
+
+      // 1) 推荐频道 channelSections（1 单位）
+      const sr = await fetch(`https://www.googleapis.com/youtube/v3/channelSections?part=contentDetails,snippet&channelId=${ch.id}&key=${YT_KEY}`);
+      const sd = await sr.json();
+      addQuota(1);
+      if(isQuotaError(sd)){ quotaHit = true; break; }
+      (sd.items||[]).forEach(it=>{
+        if(it.snippet?.type === 'multipleChannels') (it.contentDetails?.channels||[]).forEach(addCid);
+      });
+
+      // 2) 最近 10 条视频描述里的频道链接 / @handle（playlistItems 1 + videos 1）
+      const uploads = ch.contentDetails?.relatedPlaylists?.uploads;
+      if(uploads){
+        const pr = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=10&key=${YT_KEY}`);
+        const pd = await pr.json();
+        addQuota(1);
+        const vids = (pd.items||[]).map(i=>i.contentDetails?.videoId).filter(Boolean).join(',');
+        if(vids){
+          const vs = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${vids}&key=${YT_KEY}`);
+          const vsd = await vs.json();
+          addQuota(1);
+          (vsd.items||[]).forEach(v=>{
+            const vr = extractRefs(v.snippet?.description);
+            vr.cids.forEach(addCid);
+            refs.handles.push(...vr.handles);
+            seedTags.push(...(v.snippet?.tags||[]));
+            seedTitles.push(v.snippet?.title||'');
+          });
+        }
+      }
+
+      // 3) @handle 解析为 channelId（每个种子最多 15 个，每个 1 单位）
+      const uniqHandles = [...new Set(refs.handles.map(h=>h.toLowerCase()))].slice(0,15);
+      for(const h of uniqHandles){
+        const hr = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent('@'+h)}&key=${YT_KEY}`);
+        const hd = await hr.json();
+        addQuota(1);
+        if(isQuotaError(hd)){ quotaHit = true; break; }
+        const cid = hd.items?.[0]?.id;
+        if(cid) addCid(cid);
+      }
+      // 4) 关键词任务：高频标签（无标签则用最新视频标题前 4 词）
+      const kwN = Math.min(3, Math.max(0, +document.getElementById('seedKwCount').value || 0));
+      if(kwN){
+        const tagCount = {};
+        seedTags.forEach(t=>{
+          const k = t.toLowerCase().trim();
+          if(k.length >= 3 && !seedName.toLowerCase().includes(k)) tagCount[k] = (tagCount[k]||0) + 1;
+        });
+        let kws = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+        if(!kws.length && seedTitles.length) kws = [seedTitles[0].split(/\s+/).slice(0,4).join(' ')];
+        kws.slice(0,kwN).forEach(kw=>keywordJobs.push({ kw, seedId: ch.id, label: '关键词·' + kw }));
+      }
+
+      if(quotaHit) break;
+    }
+
+    // 关键词搜索：每个关键词 1 页 search.list（100 单位），只取频道 ID
+    for(let j=0; j<keywordJobs.length && !quotaHit; j++){
+      const job = keywordJobs[j];
+      setProgress(...SEED_PROG, 40 + Math.round((j/keywordJobs.length)*5), `关键词搜索 ${j+1}/${keywordJobs.length}：「${job.kw}」`);
+      let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(job.kw)}&type=video&maxResults=50&key=${YT_KEY}`;
+      const regionCode = document.getElementById('bsRegion').value.trim().toUpperCase();
+      const relLang    = document.getElementById('bsLang').value.trim();
+      if(regionCode) url += `&regionCode=${regionCode}`;
+      if(relLang)    url += `&relevanceLanguage=${encodeURIComponent(relLang)}`;
+      const kr = await fetch(url);
+      const kd = await kr.json();
+      addQuota(100);
+      if(isQuotaError(kd)){ quotaHit = true; break; }
+      (kd.items||[]).forEach(it=>{
+        const cid = it.snippet?.channelId;
+        if(cid && cid !== job.seedId && !candidates.has(cid)) candidates.set(cid, job.label);
+      });
+    }
+
+    // 去掉种子本身、已搜过、已入库、已在建联表的频道
+    const ids = [...candidates.keys()].filter(c=>
+      !seedIds.has(c) && !seen[c] && !isInDb('', c) && !inSheetPool(c, '')
+    );
+
+    if(!ids.length){
+      setProgress(...SEED_PROG, 100, '完成');
+      setStatus('seedStatus', quotaHit ? '⚠️ 配额已用尽，且没有可用候选' : '没有找到新的候选频道（种子的推荐/简介里的频道都已搜过或已入库）', quotaHit?'error':'info');
+      finish(); return;
+    }
+
+    setProgress(...SEED_PROG, 45, `找到 ${ids.length} 个候选频道，正在拉取详情和视频数据...`);
+    const enr = await enrichChannels(ids, filters);
+    if(enr.quotaHit) quotaHit = true;
+    const results = enr.results;
+
+    const today = new Date().toISOString().split('T')[0];
+    results.forEach(r=>{ r.seenInfo = seen[r.cid] || null; });
+    results.forEach(r=>{ if(!seen[r.cid]) seen[r.cid] = { keyword: candidates.get(r.cid)||'种子', date: today }; });
+    saveSeen();
+
+    searchResults = results;
+    setProgress(...SEED_PROG, 100, `完成！${ids.length} 个候选，${results.length} 个通过筛选`);
+    renderSearchResults();
+    document.getElementById('bsResultsWrap').style.display = 'block';
+    setStatus('seedStatus',
+      (quotaHit ? '⚠️ 配额已用尽，' : '✓ ') + `候选 ${ids.length} 个，${results.length} 个通过筛选（约耗 ${quotaUsed} units）`,
+      quotaHit ? 'error' : 'success');
+  } catch(e){
+    if(e.message === 'QUOTA') setStatus('seedStatus','今日配额已用尽，请明日再试','error');
+    else setStatus('seedStatus','种子扩展出错：'+e.message,'error');
+    hideProgress('seedProgressSection');
+  }
+  finish();
 }
 
 function renderSearchResults(){
